@@ -1,0 +1,860 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ElektroEksamen — trinnvis eksamenstrening til fagprøve</title>
+  <meta name="description" content="Trinnvis eksamenstrening VG1–VG3 og fagprøve/svenneprøve for elektro. Realistiske case, progresjon og eksamenssimulering." />
+
+  <style>
+    :root{
+      --bg:#070b18;
+      --bg2:#0b1020;
+      --card:rgba(18,26,51,.72);
+      --card2:rgba(6,16,42,.38);
+      --txt:#eaf0ff;
+      --muted:#b8c3e6;
+      --line:#22305a;
+      --acc:#6aa6ff;
+      --good:#51d08f;
+      --warn:#ffcc66;
+      --shadow: 0 18px 45px rgba(0,0,0,.45);
+      --radius: 18px;
+    }
+
+    *{ box-sizing:border-box; }
+    html{ scroll-behavior:smooth; }
+    body{
+      margin:0;
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      color:var(--txt);
+      background:
+        radial-gradient(1200px 650px at 20% -10%, #14204a, var(--bg)),
+        radial-gradient(900px 500px at 90% 0%, rgba(106,166,255,.18), transparent 60%),
+        radial-gradient(900px 550px at 50% 100%, rgba(81,208,143,.12), transparent 60%),
+        var(--bg);
+    }
+    a{ color:inherit; text-decoration:none; }
+    button, input, select{ font:inherit; }
+
+    .wrap{ max-width:1140px; margin:0 auto; padding:18px 16px 80px; }
+
+    /* Top bar */
+    .topbar{
+      position:sticky; top:0; z-index:50;
+      backdrop-filter: blur(10px);
+      background: linear-gradient(180deg, rgba(7,11,24,.82), rgba(7,11,24,.52));
+      border-bottom:1px solid rgba(34,48,90,.65);
+    }
+    .topbar .inner{
+      max-width:1140px; margin:0 auto; padding:12px 16px;
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+    }
+    .brand{ display:flex; align-items:center; gap:10px; font-weight:900; letter-spacing:.2px; }
+    .brand .mark{
+      width:34px; height:34px; border-radius:12px;
+      display:grid; place-items:center;
+      background: linear-gradient(180deg, rgba(106,166,255,.95), rgba(106,166,255,.45));
+      color:#06102a;
+      box-shadow: 0 10px 30px rgba(106,166,255,.18);
+    }
+    nav{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:flex-end; }
+    .navlink{
+      padding:8px 10px; border-radius:12px; color:var(--muted);
+      border:1px solid transparent;
+    }
+    .navlink:hover{ border-color:rgba(34,48,90,.9); background:rgba(18,26,51,.55); color:var(--txt); }
+
+    .btn{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid rgba(34,48,90,.95);
+      background: rgba(18,26,51,.55);
+      color:var(--txt);
+      font-weight:750;
+      cursor:pointer;
+    }
+    .btn:hover{ transform: translateY(-1px); transition: .15s ease; }
+    .btn.primary{
+      border:none;
+      color:#06102a;
+      background: linear-gradient(180deg, rgba(106,166,255,.95), rgba(106,166,255,.50));
+      box-shadow: 0 16px 40px rgba(106,166,255,.18);
+    }
+    .btn.ghost{ background: transparent; }
+
+    /* Scroll progress */
+    .scrollbar{
+      height:3px; width:100%;
+      background: rgba(34,48,90,.35);
+      position: relative;
+    }
+    .scrollbar > span{
+      position:absolute; inset:0 auto 0 0;
+      width:0%;
+      background: linear-gradient(90deg, rgba(106,166,255,.9), rgba(81,208,143,.8));
+    }
+
+    /* Layout / cards */
+    .hero{
+      margin-top:26px;
+      display:grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap:16px;
+      align-items:stretch;
+    }
+    .card{
+      border:1px solid rgba(34,48,90,.9);
+      background: var(--card);
+      border-radius: var(--radius);
+      padding:20px;
+      box-shadow: var(--shadow);
+      position:relative;
+      overflow:hidden;
+    }
+    .subcard{
+      border:1px solid rgba(34,48,90,.8);
+      background: var(--card2);
+      border-radius: 16px;
+      padding:14px;
+    }
+    .badge{
+      display:inline-flex; gap:8px; align-items:center;
+      padding:7px 10px;
+      border-radius:999px;
+      border:1px solid rgba(34,48,90,.9);
+      background: rgba(6,16,42,.35);
+      color:var(--muted);
+      font-size:13px;
+    }
+    .badge i{ width:7px; height:7px; border-radius:50%; background: var(--good); display:inline-block; }
+
+    h1{
+      margin:10px 0 10px;
+      font-size:46px;
+      line-height:1.04;
+      letter-spacing:-.4px;
+    }
+    p{ margin:0 0 12px; color:var(--muted); font-size:18px; line-height:1.55; }
+    h2{ margin:0 0 10px; font-size:26px; }
+    h3{ margin:0 0 8px; font-size:18px; }
+    .cta{ display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
+
+    .grid3{ display:grid; grid-template-columns: repeat(3,1fr); gap:12px; margin-top:14px; }
+    .kpi b{ display:block; margin-bottom:6px; font-size:16px; }
+    .kpi span{ color:var(--muted); font-size:14px; line-height:1.45; }
+
+    .heroArt{
+      position:absolute; right:-60px; top:-70px; opacity:.55;
+      filter: drop-shadow(0 20px 40px rgba(0,0,0,.25));
+      pointer-events:none;
+    }
+    .heroArt2{
+      position:absolute; left:-55px; bottom:-60px; opacity:.35;
+      pointer-events:none;
+    }
+
+    /* Tabs */
+    .tabs{ display:flex; gap:8px; flex-wrap:wrap; margin:10px 0 12px; }
+    .tab{
+      padding:9px 10px;
+      border-radius:14px;
+      border:1px solid rgba(34,48,90,.9);
+      background: rgba(6,16,42,.25);
+      color:var(--muted);
+      cursor:pointer;
+      font-weight:750;
+    }
+    .tab[aria-selected="true"]{
+      color:#06102a;
+      border:none;
+      background: linear-gradient(180deg, rgba(106,166,255,.95), rgba(106,166,255,.50));
+    }
+    .tabpanel{ display:none; }
+    .tabpanel.active{ display:block; }
+
+    /* Steps */
+    .steps{ display:grid; grid-template-columns: repeat(4,1fr); gap:10px; margin-top:10px; }
+    .step{
+      padding:14px; border-radius:16px;
+      border:1px solid rgba(34,48,90,.85);
+      background: rgba(6,16,42,.25);
+    }
+    .step .num{
+      width:28px; height:28px; border-radius:10px;
+      display:grid; place-items:center;
+      background: rgba(106,166,255,.16);
+      border: 1px solid rgba(34,48,90,.9);
+      font-weight:900;
+      color: var(--txt);
+      margin-bottom:8px;
+    }
+    .step p{ font-size:14px; margin:0; }
+
+    /* Pricing toggle */
+    .priceHead{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+    .toggle{
+      display:inline-flex; gap:10px; align-items:center;
+      padding:8px 10px; border-radius:999px;
+      border:1px solid rgba(34,48,90,.9);
+      background: rgba(6,16,42,.25);
+      color: var(--muted);
+      font-size:13px;
+    }
+    .switch{
+      width:46px; height:26px; border-radius:999px;
+      border:1px solid rgba(34,48,90,.9);
+      background: rgba(18,26,51,.55);
+      position:relative; cursor:pointer;
+      flex: 0 0 auto;
+    }
+    .switch::after{
+      content:"";
+      width:20px; height:20px; border-radius:50%;
+      position:absolute; top:2px; left:2px;
+      background: linear-gradient(180deg, rgba(106,166,255,.95), rgba(106,166,255,.50));
+      transition: left .18s ease;
+    }
+    .switch.on::after{ left:22px; }
+
+    .priceGrid{ display:grid; grid-template-columns: repeat(3,1fr); gap:12px; margin-top:12px; }
+    .plan{ padding:18px; }
+    .amount{ font-size:30px; font-weight:950; margin:6px 0 8px; letter-spacing:-.4px; }
+    .plan small{ color:var(--muted); }
+    ul{ margin:0; padding-left:18px; color:var(--muted); line-height:1.7; }
+    .tag{
+      display:inline-block;
+      margin-left:8px;
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid rgba(34,48,90,.9);
+      background: rgba(81,208,143,.10);
+      color: rgba(81,208,143,.95);
+      font-size:12px;
+      font-weight:800;
+    }
+
+    /* FAQ accordion */
+    .faq{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:10px; }
+    details{
+      border:1px solid rgba(34,48,90,.85);
+      background: rgba(6,16,42,.25);
+      border-radius:16px;
+      padding:12px 14px;
+    }
+    summary{
+      cursor:pointer;
+      list-style:none;
+      font-weight:850;
+    }
+    summary::-webkit-details-marker{ display:none; }
+    details p{ margin:10px 0 0; font-size:14px; }
+
+    /* Form */
+    form{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; align-items:stretch; }
+    input, select{
+      padding:12px 12px;
+      border-radius:14px;
+      border:1px solid rgba(34,48,90,.9);
+      background: rgba(6,16,42,.25);
+      color:var(--txt);
+      min-width: 220px;
+      outline:none;
+    }
+    input:focus, select:focus{ border-color: rgba(106,166,255,.85); box-shadow: 0 0 0 4px rgba(106,166,255,.12); }
+    input::placeholder{ color:#9fb0e6; }
+    .formNote{ color:var(--muted); font-size:13px; margin-top:8px; }
+
+    /* Modal */
+    .modalOverlay{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.58);
+      display:none;
+      align-items:center; justify-content:center;
+      padding:18px;
+      z-index:100;
+    }
+    .modalOverlay.show{ display:flex; }
+    .modal{
+      width:min(720px, 100%);
+      border:1px solid rgba(34,48,90,.95);
+      background: rgba(10,16,34,.92);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding:18px;
+      position:relative;
+      backdrop-filter: blur(10px);
+    }
+    .modalClose{
+      position:absolute; top:10px; right:10px;
+      border:1px solid rgba(34,48,90,.9);
+      background: rgba(18,26,51,.55);
+      color: var(--txt);
+      border-radius: 12px;
+      padding:8px 10px;
+      cursor:pointer;
+      font-weight:850;
+    }
+    .quizGrid{ display:grid; grid-template-columns: 1.2fr .8fr; gap:12px; margin-top:10px; }
+    .q{
+      border:1px solid rgba(34,48,90,.85);
+      background: rgba(6,16,42,.25);
+      border-radius:16px;
+      padding:14px;
+    }
+    .answers{ display:grid; gap:8px; margin-top:10px; }
+    .ans{
+      padding:10px 10px;
+      border-radius:14px;
+      border:1px solid rgba(34,48,90,.9);
+      background: rgba(18,26,51,.45);
+      cursor:pointer;
+      color:var(--txt);
+      text-align:left;
+      font-weight:750;
+    }
+    .ans:hover{ transform: translateY(-1px); transition:.15s ease; }
+    .ans.correct{ border-color: rgba(81,208,143,.75); background: rgba(81,208,143,.12); }
+    .ans.wrong{ border-color: rgba(255,204,102,.75); background: rgba(255,204,102,.10); }
+    .miniStats{ display:grid; gap:10px; }
+    .stat{ padding:12px; border-radius:16px; border:1px solid rgba(34,48,90,.85); background: rgba(6,16,42,.25); }
+    .stat b{ display:block; margin-bottom:6px; }
+    .progressRing{ width:108px; height:108px; margin-top:6px; }
+
+    /* Footer */
+    footer{ margin-top:18px; color:var(--muted); font-size:13px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+
+    /* Responsive */
+    @media (max-width: 980px){
+      .hero{ grid-template-columns:1fr; }
+      h1{ font-size:38px; }
+      .grid3{ grid-template-columns:1fr; }
+      .steps{ grid-template-columns:1fr 1fr; }
+      .priceGrid{ grid-template-columns:1fr; }
+      .faq{ grid-template-columns:1fr; }
+      .quizGrid{ grid-template-columns:1fr; }
+      nav{ display:none; } /* enklere mobilheader */
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sticky header -->
+  <div class="topbar">
+    <div class="inner">
+      <div class="brand">
+        <div class="mark" aria-hidden="true">⚡</div>
+        <div>ElektroEksamen</div>
+      </div>
+
+      <nav aria-label="Hovedmeny">
+        <a class="navlink" href="#hvordan">Hvordan det fungerer</a>
+        <a class="navlink" href="#demo">Mini-demo</a>
+        <a class="navlink" href="#priser">Priser</a>
+        <a class="navlink" href="#faq">FAQ</a>
+        <a class="navlink" href="#waitlist">Venteliste</a>
+      </nav>
+
+      <div style="display:flex; gap:10px; align-items:center;">
+        <button class="btn ghost" id="openDemoBtn" title="Prøv en mini-demo">▶ Mini-demo</button>
+        <a class="btn primary" href="#waitlist">Bli med</a>
+      </div>
+    </div>
+    <div class="scrollbar" aria-hidden="true"><span id="scrollProg"></span></div>
+  </div>
+
+  <div class="wrap">
+    <!-- HERO -->
+    <section class="hero" id="top">
+      <div class="card">
+        <!-- Decorative SVG (relevant “circuit” vibe) -->
+        <svg class="heroArt" width="380" height="280" viewBox="0 0 380 280" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <linearGradient id="g1" x1="60" y1="30" x2="340" y2="250" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#6aa6ff" stop-opacity="0.95"/>
+              <stop offset="1" stop-color="#51d08f" stop-opacity="0.55"/>
+            </linearGradient>
+          </defs>
+          <path d="M45 80 C120 30, 210 35, 280 90 S360 180, 320 230 C280 280, 190 270, 120 225 S-10 130, 45 80Z" stroke="url(#g1)" stroke-width="3" opacity=".9"/>
+          <path d="M90 90 H160 V150 H240 V210 H320" stroke="url(#g1)" stroke-width="3" opacity=".8"/>
+          <circle cx="90" cy="90" r="6" fill="#6aa6ff"/>
+          <circle cx="160" cy="90" r="6" fill="#6aa6ff"/>
+          <circle cx="160" cy="150" r="6" fill="#51d08f"/>
+          <circle cx="240" cy="150" r="6" fill="#6aa6ff"/>
+          <circle cx="240" cy="210" r="6" fill="#51d08f"/>
+          <circle cx="320" cy="210" r="6" fill="#6aa6ff"/>
+          <path d="M205 70 L185 120 H215 L195 170" stroke="url(#g1)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+
+        <span class="badge"><i></i>VG1–VG3 • Fagprøve/Svennebrev • Elektro</span>
+        <h1>Trinnvis eksamenstrening — fra der du er, til trygg teoridel</h1>
+        <p>
+          En betalt plattform som gjør øving konkret: kompetansemål, realistiske case, progresjon og eksamensmodus.
+          Start på VG1, hopp til VG2/VG3, eller gå rett på fagprøveforberedelse.
+        </p>
+
+        <div class="cta">
+          <a class="btn primary" href="#waitlist">Bli med på pilot</a>
+          <button class="btn" id="openDemoBtn2">Prøv mini-demo</button>
+          <a class="btn" href="#hvordan">Se opplegget</a>
+        </div>
+
+        <div class="grid3">
+          <div class="subcard kpi">
+            <b>Case-basert</b>
+            <span>Oppgaver som ligner virkelige installasjoner og feilsøking, ikke bare “quiz”.</span>
+          </div>
+          <div class="subcard kpi">
+            <b>Kompetansemål</b>
+            <span>Du ser hva du mestrer og hva som mangler — mål for mål.</span>
+          </div>
+          <div class="subcard kpi">
+            <b>Eksamensmodus</b>
+            <span>Tid, format og vurdering som oppleves realistisk.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right side: interactive feature tabs -->
+      <div class="card" id="hvordan">
+        <svg class="heroArt2" width="220" height="220" viewBox="0 0 220 220" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="110" cy="110" r="92" stroke="rgba(106,166,255,.65)" stroke-width="3"/>
+          <circle cx="110" cy="110" r="62" stroke="rgba(81,208,143,.45)" stroke-width="3"/>
+          <path d="M110 48 V110 L158 140" stroke="rgba(106,166,255,.85)" stroke-width="4" stroke-linecap="round" />
+          <circle cx="110" cy="110" r="6" fill="rgba(106,166,255,.95)"/>
+        </svg>
+
+        <h2>Hvordan det fungerer</h2>
+        <p style="font-size:15px;">
+          Velg nivå, ta en rask diagnostest, og få et løp som leder deg til eksamen/fagprøve med tydelig progresjon.
+        </p>
+
+        <div class="steps" aria-label="Stegvis løp">
+          <div class="step">
+            <div class="num">1</div>
+            <h3 style="margin:0 0 6px;">Velg nivå</h3>
+            <p>VG1, VG2/VG3 eller fagprøve — start der du er.</p>
+          </div>
+          <div class="step">
+            <div class="num">2</div>
+            <h3 style="margin:0 0 6px;">Diagnose</h3>
+            <p>Kartlegg styrker og hull på få minutter.</p>
+          </div>
+          <div class="step">
+            <div class="num">3</div>
+            <h3 style="margin:0 0 6px;">Tren målrettet</h3>
+            <p>Oppgaver knyttet til kompetansemål + case.</p>
+          </div>
+          <div class="step">
+            <div class="num">4</div>
+            <h3 style="margin:0 0 6px;">Eksamensmodus</h3>
+            <p>Simuler eksamen med tid og realistisk format.</p>
+          </div>
+        </div>
+
+        <h2 style="margin-top:18px;">Velg fokus</h2>
+        <div class="tabs" role="tablist" aria-label="Fokus">
+          <button class="tab" role="tab" aria-selected="true" aria-controls="panel-vg1" id="tab-vg1">VG1</button>
+          <button class="tab" role="tab" aria-selected="false" aria-controls="panel-vg2" id="tab-vg2">VG2/VG3</button>
+          <button class="tab" role="tab" aria-selected="false" aria-controls="panel-fag" id="tab-fag">Fagprøve</button>
+        </div>
+
+        <div class="tabpanel active" id="panel-vg1" role="tabpanel" aria-labelledby="tab-vg1">
+          <div class="subcard">
+            <b>VG1: bygg grunnmuren</b>
+            <ul style="margin-top:8px;">
+              <li>Grunnleggende el-teori og beregninger</li>
+              <li>Sikkerhet og arbeidsmetodikk</li>
+              <li>Enkle oppdrag/case</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="tabpanel" id="panel-vg2" role="tabpanel" aria-labelledby="tab-vg2">
+          <div class="subcard">
+            <b>VG2/VG3: eksamenstrening</b>
+            <ul style="margin-top:8px;">
+              <li>Feilsøking og måling</li>
+              <li>Vern, kabelvalg og dimensjonering</li>
+              <li>Skjema/tegning-forståelse</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="tabpanel" id="panel-fag" role="tabpanel" aria-labelledby="tab-fag">
+          <div class="subcard">
+            <b>Fagprøve: teori + dokumentasjon</b>
+            <ul style="margin-top:8px;">
+              <li>Planlegging, risikovurdering og HMS</li>
+              <li>Dokumentasjon og sluttkontroll</li>
+              <li>Case som speiler fagprøvearbeid</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="cta" style="margin-top:14px;">
+          <button class="btn primary" id="openDemoBtn3">Se mini-demo</button>
+          <a class="btn" href="#priser">Se pris</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Demo section -->
+    <section class="card" id="demo" style="margin-top:14px;">
+      <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+        <div>
+          <h2>Mini-demo: slik kan en økt se ut</h2>
+          <p style="max-width:840px;">
+            En kort oppgave med umiddelbar feedback. I fullversjonen får du flere oppgavetyper, case, progresjon per kompetansemål og eksamensmodus.
+          </p>
+        </div>
+        <button class="btn primary" id="openDemoBtn4">Åpne demo</button>
+      </div>
+
+      <div class="grid3" style="margin-top:10px;">
+        <div class="subcard">
+          <b>1) Oppgave</b>
+          <div style="color:var(--muted); font-size:14px; line-height:1.55;">
+            Velg riktig alternativ → få forklaring → lagre resultat på tema.
+          </div>
+        </div>
+        <div class="subcard">
+          <b>2) Feedback</b>
+          <div style="color:var(--muted); font-size:14px; line-height:1.55;">
+            “Hvorfor” er riktig/feil + tips til hva du bør repetere.
+          </div>
+        </div>
+        <div class="subcard">
+          <b>3) Progresjon</b>
+          <div style="color:var(--muted); font-size:14px; line-height:1.55;">
+            Score per tema/kompetansemål og anbefalt neste steg.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pricing -->
+    <section class="card" id="priser" style="margin-top:14px;">
+      <div class="priceHead">
+        <div>
+          <h2>Priser (skisse for pilot)</h2>
+          <p style="margin:0; font-size:15px;">
+            Start enkelt i pilot. Senere kan du legge til bedrifts-/opplæringskontor-lisens.
+          </p>
+        </div>
+
+        <div class="toggle" aria-label="Prisvisning">
+          <span>Per måned</span>
+          <div class="switch" id="priceSwitch" role="switch" aria-checked="false" tabindex="0" title="Bytt mellom mnd og 3 mnd"></div>
+          <span>3 mnd</span>
+        </div>
+      </div>
+
+      <div class="priceGrid">
+        <div class="card plan">
+          <h3>Elev</h3>
+          <div class="amount" data-m="249" data-q="599">249 kr <small>/ mnd</small></div>
+          <ul>
+            <li>Oppgaver + progresjon</li>
+            <li>Eksamensmodus (basis)</li>
+            <li>Tilgang til VG-nivå</li>
+          </ul>
+        </div>
+
+        <div class="card plan" style="border-color: rgba(106,166,255,.75);">
+          <h3>Lærling <span class="tag">Mest relevant</span></h3>
+          <div class="amount" data-m="399" data-q="1490">399 kr <small>/ mnd</small></div>
+          <ul>
+            <li>Fagprøve-forberedelse</li>
+            <li>Case-samling</li>
+            <li>Svakhetsanalyse</li>
+          </ul>
+        </div>
+
+        <div class="card plan">
+          <h3>Bedrift / Opplæringskontor</h3>
+          <div class="amount">På avtale</div>
+          <ul>
+            <li>Lisens per bruker</li>
+            <li>Rapporter/progresjon</li>
+            <li>Onboarding</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="card" id="faq" style="margin-top:14px;">
+      <h2>FAQ</h2>
+      <div class="faq">
+        <details>
+          <summary>Er dette et “kurs” eller en oppgaveplattform?</summary>
+          <p>Hovedproduktet er øving og simulering: oppgaver, case, eksamensmodus og progresjon. Teori er kort og målrettet (nok til å løse oppgavene effektivt).</p>
+        </details>
+        <details>
+          <summary>Hva betyr “kompetansemål-tracking” i praksis?</summary>
+          <p>Hver oppgave knyttes til tema/kompetansemål. Du får oversikt: grønt/gult/rødt per mål, og anbefalt neste modul.</p>
+        </details>
+        <details>
+          <summary>Kan jeg hoppe rett til fagprøven?</summary>
+          <p>Ja. Du kan velge startnivå direkte, eller ta en diagnostest som foreslår hvilket nivå du bør begynne på.</p>
+        </details>
+        <details>
+          <summary>Hvordan sikrer dere at innholdet er realistisk?</summary>
+          <p>Ved å bygge oppgaver som speiler praksis: dimensjonering, vern, måling, feilsøking og dokumentasjon — og kvalitetssikre med fagfolk.</p>
+        </details>
+      </div>
+    </section>
+
+    <!-- Waitlist -->
+    <section class="card" id="waitlist" style="margin-top:14px;">
+      <h2>Venteliste / pilot</h2>
+      <p>
+        Legg igjen e-post, så tar vi kontakt når første pilot åpner. (Bytt gjerne skjemaet med Mailchimp/ConvertKit senere.)
+      </p>
+
+      <form id="waitlistForm">
+        <input type="text" name="name" placeholder="Navn" autocomplete="name" />
+        <input type="email" name="email" placeholder="E-post" required autocomplete="email" />
+        <select name="segment" required>
+          <option value="" disabled selected>Jeg er…</option>
+          <option value="learner">Lærling</option>
+          <option value="student">Elev</option>
+          <option value="company">Bedrift / opplæringskontor</option>
+        </select>
+        <button type="submit" class="btn primary" style="border:none;">Meld meg på</button>
+      </form>
+
+      <div class="formNote" id="formNote">
+        Personvern: Vi bruker e-post kun for pilotkontakt. (Legg til egen personvernsiden når du går live.)
+      </div>
+
+      <footer>
+        <span>© <span id="y"></span> ElektroEksamen</span>
+        <span style="display:flex; gap:10px; flex-wrap:wrap;">
+          <a class="navlink" href="#top">Til toppen</a>
+          <a class="navlink" href="#priser">Priser</a>
+          <a class="navlink" href="#faq">FAQ</a>
+        </span>
+      </footer>
+    </section>
+  </div>
+
+  <!-- Modal: Mini demo quiz -->
+  <div class="modalOverlay" id="modalOverlay" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="demoTitle">
+      <button class="modalClose" id="closeModalBtn" aria-label="Lukk">✕</button>
+      <h2 id="demoTitle" style="margin:0;">Mini-demo: Elektrooppgave</h2>
+      <p style="margin-top:6px;">
+        Dette er en enkel variant. I fullversjonen lagres progresjon, og du får flere oppgavetyper + case.
+      </p>
+
+      <div class="quizGrid">
+        <div class="q">
+          <b>Oppgave</b>
+          <div style="margin-top:8px; color:var(--muted); line-height:1.55;">
+            En last trekker <b>10 A</b> ved <b>230 V</b> (1-fase). Hva er omtrent effekten?
+          </div>
+
+          <div class="answers" id="answers">
+            <button class="ans" data-correct="false">A) 1,0 kW</button>
+            <button class="ans" data-correct="true">B) 2,3 kW</button>
+            <button class="ans" data-correct="false">C) 10,0 kW</button>
+            <button class="ans" data-correct="false">D) 23,0 kW</button>
+          </div>
+
+          <div class="subcard" id="explain" style="margin-top:12px; display:none;">
+            <b>Forklaring</b>
+            <div style="margin-top:6px; color:var(--muted); line-height:1.55;">
+              Effekt i 1-fase: <b>P ≈ U × I</b> → 230 V × 10 A ≈ <b>2300 W</b> ≈ <b>2,3 kW</b>.
+              (I fullversjonen får du oppfølging: variasjoner med cosφ, 3-fase osv.)
+            </div>
+          </div>
+        </div>
+
+        <div class="miniStats">
+          <div class="stat">
+            <b>Status</b>
+            <div id="statusText" style="color:var(--muted);">Velg et alternativ for å se feedback.</div>
+          </div>
+
+          <div class="stat">
+            <b>Progresjon (demo)</b>
+            <svg class="progressRing" viewBox="0 0 120 120" aria-label="Progresjonsring">
+              <circle cx="60" cy="60" r="46" stroke="rgba(34,48,90,.85)" stroke-width="10" fill="none" />
+              <circle id="ring" cx="60" cy="60" r="46" stroke="rgba(106,166,255,.9)" stroke-width="10" fill="none"
+                      stroke-linecap="round" transform="rotate(-90 60 60)" stroke-dasharray="289" stroke-dashoffset="289" />
+              <text id="ringText" x="60" y="67" text-anchor="middle" font-size="18" font-weight="900" fill="rgba(234,240,255,.95)">0%</text>
+            </svg>
+            <div style="color:var(--muted); font-size:13px; line-height:1.45;">
+              I fullversjonen får du score per tema/kompetansemål og anbefalt neste modul.
+            </div>
+          </div>
+
+          <div class="stat">
+            <b>Neste steg</b>
+            <div style="color:var(--muted); line-height:1.55;" id="nextStep">
+              Prøv et par oppgaver til i samme tema, eller ta diagnostesten for å finne riktig nivå.
+            </div>
+          </div>
+
+          <button class="btn primary" id="jumpWaitlist" style="justify-content:center; width:100%; border:none;">
+            Bli med på pilot
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Year
+    document.getElementById('y').textContent = new Date().getFullYear();
+
+    // Scroll progress indicator
+    const scrollProg = document.getElementById('scrollProg');
+    function updateScrollProg(){
+      const doc = document.documentElement;
+      const scrollTop = doc.scrollTop || document.body.scrollTop;
+      const scrollHeight = doc.scrollHeight - doc.clientHeight;
+      const pct = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+      scrollProg.style.width = pct.toFixed(2) + '%';
+    }
+    document.addEventListener('scroll', updateScrollProg, { passive:true });
+    updateScrollProg();
+
+    // Tabs
+    const tabButtons = Array.from(document.querySelectorAll('.tab'));
+    const panels = Array.from(document.querySelectorAll('.tabpanel'));
+    tabButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        tabButtons.forEach(b => b.setAttribute('aria-selected','false'));
+        btn.setAttribute('aria-selected','true');
+        panels.forEach(p => p.classList.remove('active'));
+        const panel = document.getElementById(btn.getAttribute('aria-controls'));
+        panel.classList.add('active');
+      });
+    });
+
+    // Pricing toggle (monthly vs 3 months)
+    const priceSwitch = document.getElementById('priceSwitch');
+    const amountEls = Array.from(document.querySelectorAll('.amount[data-m][data-q]'));
+    let quarterly = false;
+
+    function renderPrices(){
+      amountEls.forEach(el => {
+        const m = el.getAttribute('data-m');
+        const q = el.getAttribute('data-q');
+        if(!quarterly){
+          el.innerHTML = `${m} kr <small>/ mnd</small>`;
+        } else {
+          el.innerHTML = `${q} kr <small>/ 3 mnd</small>`;
+        }
+      });
+      priceSwitch.classList.toggle('on', quarterly);
+      priceSwitch.setAttribute('aria-checked', quarterly ? 'true' : 'false');
+    }
+    function togglePrices(){ quarterly = !quarterly; renderPrices(); }
+
+    priceSwitch.addEventListener('click', togglePrices);
+    priceSwitch.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); togglePrices(); }
+    });
+    renderPrices();
+
+    // Modal controls
+    const modalOverlay = document.getElementById('modalOverlay');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const openBtns = ['openDemoBtn','openDemoBtn2','openDemoBtn3','openDemoBtn4']
+      .map(id => document.getElementById(id)).filter(Boolean);
+
+    function openModal(){
+      modalOverlay.classList.add('show');
+      modalOverlay.setAttribute('aria-hidden','false');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeModal(){
+      modalOverlay.classList.remove('show');
+      modalOverlay.setAttribute('aria-hidden','true');
+      document.body.style.overflow = '';
+    }
+    openBtns.forEach(b => b.addEventListener('click', openModal));
+    closeModalBtn.addEventListener('click', closeModal);
+    modalOverlay.addEventListener('click', (e) => { if(e.target === modalOverlay) closeModal(); });
+    document.addEventListener('keydown', (e) => { if(e.key === 'Escape' && modalOverlay.classList.contains('show')) closeModal(); });
+
+    // Demo quiz logic
+    const answers = document.getElementById('answers');
+    const explain = document.getElementById('explain');
+    const statusText = document.getElementById('statusText');
+    const nextStep = document.getElementById('nextStep');
+
+    const ring = document.getElementById('ring');
+    const ringText = document.getElementById('ringText');
+    const CIRC = 289; // approx circumference used in SVG
+    let answered = false;
+
+    function setProgress(pct){
+      const offset = CIRC - (CIRC * pct / 100);
+      ring.style.strokeDashoffset = offset.toFixed(2);
+      ringText.textContent = `${pct}%`;
+    }
+    setProgress(0);
+
+    answers.addEventListener('click', (e) => {
+      const btn = e.target.closest('button.ans');
+      if(!btn || answered) return;
+
+      answered = true;
+      const correct = btn.getAttribute('data-correct') === 'true';
+
+      Array.from(answers.querySelectorAll('.ans')).forEach(b => {
+        const isCorrect = b.getAttribute('data-correct') === 'true';
+        b.classList.add(isCorrect ? 'correct' : '');
+      });
+
+      if(correct){
+        btn.classList.add('correct');
+        statusText.innerHTML = `<span style="color:rgba(81,208,143,.95); font-weight:900;">Riktig!</span> Du er på god vei.`;
+        nextStep.textContent = "Neste: prøv en variant med 3-fase og cosφ, eller gå videre til verndimensjonering.";
+        setProgress(35);
+      } else {
+        btn.classList.add('wrong');
+        statusText.innerHTML = `<span style="color:rgba(255,204,102,.95); font-weight:900;">Nesten.</span> Se forklaringen og prøv en ny oppgave i samme tema.`;
+        nextStep.textContent = "Anbefalt: repeter P=U×I (1-fase), og test deg igjen med nye tall.";
+        setProgress(18);
+      }
+
+      explain.style.display = 'block';
+    });
+
+    // Jump to waitlist from modal
+    document.getElementById('jumpWaitlist').addEventListener('click', () => {
+      closeModal();
+      document.querySelector('#waitlist').scrollIntoView({ behavior: 'smooth' });
+      const email = document.querySelector('input[name="email"]');
+      if(email) setTimeout(() => email.focus(), 350);
+    });
+
+    // Waitlist form UX
+    const waitlistForm = document.getElementById('waitlistForm');
+    const formNote = document.getElementById('formNote');
+
+    waitlistForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const data = new FormData(waitlistForm);
+      const email = String(data.get('email') || '').trim();
+      const seg = String(data.get('segment') || '').trim();
+
+      if(!email || !email.includes('@') || !seg){
+        formNote.innerHTML = `<span style="color:rgba(255,204,102,.95); font-weight:900;">Sjekk feltene:</span> legg inn gyldig e-post og velg hvem du er.`;
+        return;
+      }
+
+      // Fake submit success state (bytt med ekte backend senere)
+      waitlistForm.querySelectorAll('input,select,button').forEach(el => el.disabled = true);
+      formNote.innerHTML = `<span style="color:rgba(81,208,143,.95); font-weight:900;">Takk!</span> Du er registrert for pilot. (Koble til Mailchimp/ConvertKit/egen backend når du publiserer.)`;
+    });
+  </script>
+</body>
+</html>
