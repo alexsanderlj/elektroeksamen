@@ -614,17 +614,14 @@
         Legg igjen e-post, så tar vi kontakt når første pilot åpner. (Bytt gjerne skjemaet med Mailchimp/ConvertKit senere.)
       </p>
 
-      <form id="waitlistForm">
-        <input type="text" name="name" placeholder="Navn" autocomplete="name" />
-        <input type="email" name="email" placeholder="E-post" required autocomplete="email" />
-        <select name="segment" required>
-          <option value="" disabled selected>Jeg er…</option>
-          <option value="learner">Lærling</option>
-          <option value="student">Elev</option>
-          <option value="company">Bedrift / opplæringskontor</option>
-        </select>
-        <button type="submit" class="btn primary" style="border:none;">Meld meg på</button>
-      </form>
+<form name="waitlist" method="POST" data-netlify="true">
+  <input type="hidden" name="form-name" value="waitlist">
+
+  <input type="text" name="name" placeholder="Navn">
+  <input type="email" name="email" placeholder="E-post" required>
+
+  <button type="submit">Meld meg på</button>
+</form>
 
       <div class="formNote" id="formNote">
         Personvern: Vi bruker e-post kun for pilotkontakt. (Legg til egen personvernsiden når du går live.)
@@ -857,4 +854,5 @@
     });
   </script>
 </body>
+
 </html>
