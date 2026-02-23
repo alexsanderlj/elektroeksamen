@@ -296,13 +296,13 @@
       cursor:pointer;
       font-weight:850;
     }
-    .quizGrid{ display:grid; grid-template-columns: 1.2fr .8fr; gap:12px; margin-top:10px; }
-    .q{
-      border:1px solid rgba(34,48,90,.85);
-      background: rgba(6,16,42,.25);
-      border-radius:16px;
-      padding:14px;
-    }
+   .quizGrid{
+  display:grid;
+  grid-template-columns: 1.2fr .8fr;
+  gap:12px;
+  margin-top:10px;
+  align-items:start; /* hindrer stretching */
+}
     .answers{ display:grid; gap:8px; margin-top:10px; }
     .ans{
       padding:10px 10px;
@@ -1253,6 +1253,7 @@ diagResetBtn.addEventListener('click', resetDiag);
 </body>
 
 </html>
+
 
 
 
