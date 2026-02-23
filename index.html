@@ -354,10 +354,12 @@
         <a class="navlink" href="#priser">Priser</a>
         <a class="navlink" href="#faq">FAQ</a>
         <a class="navlink" href="#waitlist">Venteliste</a>
+        <a class="navlink" href="#diagnose" id="openDiagBtnNav">Diagnosetest</a>
       </nav>
 
       <div style="display:flex; gap:10px; align-items:center;">
         <button class="btn ghost" id="openDemoBtn" title="Prøv en mini-demo">▶ Mini-demo</button>
+        <button class="btn" id="openDiagBtnTop" title="Ta diagnosetest">🧭 Diagnosetest</button>
         <a class="btn primary" href="#waitlist">Bli med</a>
       </div>
     </div>
@@ -511,6 +513,20 @@
         </div>
         <button class="btn primary" id="openDemoBtn4">Åpne demo</button>
       </div>
+      <section class="card" id="diagnose" style="margin-top:14px;">
+  <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+    <div>
+      <h2>Diagnosetest: finn riktig nivå</h2>
+      <p style="max-width:860px;">
+        6–10 minutter. Du får plassering (VG1 / VG2–VG3 / fagprøve) og anbefalte tema å øve på først.
+      </p>
+    </div>
+    <button class="btn primary" id="openDiagBtn" style="border:none;">Ta diagnosetest</button>
+  </div>
+</section>
+
+<!-- Pricing -->
+<section class="card" id="priser" style="margin-top:14px;">
 
       <div class="grid3" style="margin-top:10px;">
         <div class="subcard">
@@ -646,6 +662,78 @@
       <p style="margin-top:6px;">
         Dette er en enkel variant. I fullversjonen lagres progresjon, og du får flere oppgavetyper + case.
       </p>
+
+      <div class="modalOverlay" id="diagOverlay" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="diagTitle">
+    <button class="modalClose" id="closeDiagBtn" aria-label="Lukk">✕</button>
+
+    <h2 id="diagTitle" style="margin:0;">Diagnosetest: Elektro</h2>
+    <p style="margin-top:6px;">
+      Svar på spørsmålene, så får du anbefalt nivå og hva du bør øve på først.
+    </p>
+
+    <div class="subcard" style="margin-top:10px;">
+      <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+        <div style="color:var(--muted);">
+          Spørsmål <b id="diagIndex">1</b> av <b id="diagTotal">12</b>
+        </div>
+        <div style="color:var(--muted);">
+          Fremdrift: <b id="diagProgressText">0%</b>
+        </div>
+      </div>
+      <div style="height:10px; border:1px solid rgba(34,48,90,.85); border-radius:999px; margin-top:10px; background:rgba(6,16,42,.25); overflow:hidden;">
+        <div id="diagProgressBar" style="height:100%; width:0%; background:linear-gradient(90deg, rgba(106,166,255,.9), rgba(81,208,143,.8));"></div>
+      </div>
+    </div>
+
+    <div class="quizGrid" style="margin-top:12px;">
+      <div class="q">
+        <b id="diagBlockLabel">VG1 (grunnmur)</b>
+        <div id="diagQuestion" style="margin-top:8px; color:var(--muted); line-height:1.55;">
+          <!-- spørsmåltekst -->
+        </div>
+
+        <div class="answers" id="diagAnswers" style="margin-top:12px;">
+          <!-- svar -->
+        </div>
+
+        <div class="cta" style="margin-top:12px;">
+          <button class="btn" id="diagBackBtn" type="button">← Tilbake</button>
+          <button class="btn" id="diagResetBtn" type="button">Start på nytt</button>
+        </div>
+      </div>
+
+      <div class="miniStats">
+        <div class="stat">
+          <b>Resultat</b>
+          <div id="diagStatus" style="color:var(--muted); line-height:1.55;">
+            Svar på spørsmålene for å få anbefaling.
+          </div>
+        </div>
+
+        <div class="stat">
+          <b>Delpoeng</b>
+          <div style="color:var(--muted); line-height:1.7;">
+            VG1: <b id="scoreA">0</b>/5<br>
+            VG2/VG3: <b id="scoreB">0</b>/10<br>
+            Fagprøve: <b id="scoreC">0</b>/6
+          </div>
+        </div>
+
+        <div class="stat">
+          <b>Anbefalt nivå</b>
+          <div id="diagPlacement" style="color:var(--muted); line-height:1.55;">
+            —
+          </div>
+        </div>
+
+        <button class="btn primary" id="diagDoneBtn" style="justify-content:center; width:100%; border:none;" type="button">
+          Lukk
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
       <div class="quizGrid">
         <div class="q">
@@ -838,6 +926,7 @@
 </body>
 
 </html>
+
 
 
 
