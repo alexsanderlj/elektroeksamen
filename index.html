@@ -921,11 +921,339 @@
       if(email) setTimeout(() => email.focus(), 350);
     });
 
+    // =========================
+// Diagnosetest (Udir/NDLA-inspirert) - v0.1
+// =========================
+const diagOverlay = document.getElementById('diagOverlay');
+const closeDiagBtn = document.getElementById('closeDiagBtn');
+const diagDoneBtn = document.getElementById('diagDoneBtn');
+
+const diagIndexEl = document.getElementById('diagIndex');
+const diagTotalEl = document.getElementById('diagTotal');
+const diagProgressText = document.getElementById('diagProgressText');
+const diagProgressBar = document.getElementById('diagProgressBar');
+
+const diagBlockLabel = document.getElementById('diagBlockLabel');
+const diagQuestionEl = document.getElementById('diagQuestion');
+const diagAnswersEl = document.getElementById('diagAnswers');
+
+const diagBackBtn = document.getElementById('diagBackBtn');
+const diagResetBtn = document.getElementById('diagResetBtn');
+
+const diagStatus = document.getElementById('diagStatus');
+const scoreAEl = document.getElementById('scoreA');
+const scoreBEl = document.getElementById('scoreB');
+const scoreCEl = document.getElementById('scoreC');
+const diagPlacementEl = document.getElementById('diagPlacement');
+
+// Åpneknapper (hvis de finnes)
+const diagOpenBtn = document.getElementById('openDiagBtn');
+const diagOpenBtnTop = document.getElementById('openDiagBtnTop');
+const diagOpenBtnNav = document.getElementById('openDiagBtnNav');
+
+const DIAG_STORAGE_KEY = 'ee_diag_v01';
+
+const diagQuestions = [
+  // Block A (VG1) - 5 spørsmål, 1p hver
+  {
+    id: 'A1', block: 'A', pts: 1, label: 'VG1 (grunnmur)', topic: 'Ohms lov',
+    q: 'En krets har R = 23 Ω og I = 2 A. Hva er U omtrent?',
+    options: ['11,5 V', '21 V', '46 V', '230 V'],
+    correctIndex: 2,
+    explain: 'Ohms lov: U = R × I = 23 × 2 ≈ 46 V.'
+  },
+  {
+    id: 'A2', block: 'A', pts: 1, label: 'VG1 (grunnmur)', topic: 'Effekt 1-fase',
+    q: 'En last trekker 10 A ved 230 V (1-fase). Hva er effekten omtrent?',
+    options: ['1,0 kW', '2,3 kW', '10,0 kW', '23,0 kW'],
+    correctIndex: 1,
+    explain: 'P ≈ U × I = 230 × 10 = 2300 W ≈ 2,3 kW.'
+  },
+  {
+    id: 'A3', block: 'A', pts: 1, label: 'VG1 (grunnmur)', topic: 'Serie/parallell',
+    q: 'Hva skjer med totalmotstanden når motstander kobles i parallell?',
+    options: ['Øker alltid', 'Minker alltid', 'Endrer seg ikke', 'Blir summen av alle'],
+    correctIndex: 1,
+    explain: 'Parallellkobling gir lavere ekvivalent motstand enn minste enkeltmotstand.'
+  },
+  {
+    id: 'A4', block: 'A', pts: 1, label: 'VG1 (grunnmur)', topic: 'Måleinstrumenter',
+    q: 'Hvilket instrument bruker du for å måle spenning?',
+    options: ['Amperemeter', 'Voltmeter', 'Ohmmeter', 'Wattmeter'],
+    correctIndex: 1,
+    explain: 'Spenning måles med voltmeter (riktig måleområde!).'
+  },
+  {
+    id: 'A5', block: 'A', pts: 1, label: 'VG1 (grunnmur)', topic: 'Måling/feilkilder',
+    q: 'Du måler 0 V over en komponent du forventer spenning på. Hva sjekker du først?',
+    options: ['Bytt komponenten', 'Sjekk målepunkt/tilkobling og måleområde', 'Øk sikringsstørrelsen', 'Mål bare én gang til'],
+    correctIndex: 1,
+    explain: 'Feil målepunkt/område/tilkobling er en vanlig feilkilde. Verifiser måleoppsettet først.'
+  },
+
+  // Block B (VG2/VG3) - 5 spørsmål, 2p hver
+  {
+    id: 'B1', block: 'B', pts: 2, label: 'VG2/VG3 (yrkesnivå)', topic: 'Vern',
+    q: 'Hvorfor er riktig vern viktig?',
+    options: ['For å få høyere effekt', 'For å beskytte kabel/utstyr mot overlast og kortslutning', 'For å spare strøm', 'For å øke spenningen'],
+    correctIndex: 1,
+    explain: 'Vernet beskytter mot overstrøm og skal passe til kabel og installasjonsmåte.'
+  },
+  {
+    id: 'B2', block: 'B', pts: 2, label: 'VG2/VG3 (yrkesnivå)', topic: 'Spenningsfall',
+    q: 'Hva kan for stort spenningsfall typisk føre til?',
+    options: ['Mindre varme i kabel', 'For lav spenning ved last → ustabil drift', 'Høyere cosφ', 'Lavere strøm alltid'],
+    correctIndex: 1,
+    explain: 'Stort spenningsfall kan gi funksjonsfeil og dårlig drift når lasten får for lav spenning.'
+  },
+  {
+    id: 'B3', block: 'B', pts: 2, label: 'VG2/VG3 (yrkesnivå)', topic: 'Feilsøking',
+    q: 'Kursen løser ut når en maskin startes. Hva er best første steg?',
+    options: ['Øke vern-størrelse', 'Kartlegge når det skjer og måle/observere (startstrøm/feil)', 'Bytte alle kabler', 'Ignorere, det går over'],
+    correctIndex: 1,
+    explain: 'Start med fakta: når skjer det, hvilke målinger/observasjoner trengs, og mulige feilkilder.'
+  },
+  {
+    id: 'B4', block: 'B', pts: 2, label: 'VG2/VG3 (yrkesnivå)', topic: 'Skjema/forståelse',
+    q: 'Hva er hovedpoenget med å lese skjema/tegning før arbeid?',
+    options: ['Spare papir', 'Forstå koblinger/komponenter og planlegge trygg gjennomføring', 'Finne kundens navn', 'Slippe målinger'],
+    correctIndex: 1,
+    explain: 'Skjema gir oversikt over koblinger og komponenter – grunnlag for plan og sikker jobb.'
+  },
+  {
+    id: 'B5', block: 'B', pts: 2, label: 'VG2/VG3 (yrkesnivå)', topic: 'HMS',
+    q: 'Før arbeid på anlegg: hva er riktig prioritet?',
+    options: ['Start med å koble om', 'Vurdere risiko og sikre arbeidssituasjon før oppstart', 'Jobb raskt først, dokumentér etterpå', 'La lærlingen prøve alene'],
+    correctIndex: 1,
+    explain: 'Risikovurdering og sikring kommer før gjennomføring.'
+  },
+
+  // Block C (Fagprøve) - 2 spørsmål, 3p hver
+  {
+    id: 'C1', block: 'C', pts: 3, label: 'Fagprøve (beredskap)', topic: 'Planlegging',
+    q: 'Hvilken rekkefølge er mest riktig i en fagprøve-lignende oppgave?',
+    options: [
+      'Utførelse → plan → dokumentasjon → HMS',
+      'HMS/risikovurdering → plan → utførelse → kontroll/dokumentasjon',
+      'Dokumentasjon → utførelse → plan → HMS',
+      'Plan → utførelse → HMS → kontroll'
+    ],
+    correctIndex: 1,
+    explain: 'Fag-/svenneprøven vurderer planlegging, gjennomføring, egenvurdering og dokumentasjon.'
+  },
+  {
+    id: 'C2', block: 'C', pts: 3, label: 'Fagprøve (beredskap)', topic: 'Dokumentasjon',
+    q: 'Hvorfor er dokumentasjonsdelen viktig?',
+    options: [
+      'Den alene avgjør bestått',
+      'Den viser valg/metode og gir grunnlag for vurdering, men er ikke alene nok',
+      'Den er bare for pynt',
+      'Den kan hoppes over'
+    ],
+    correctIndex: 1,
+    explain: 'Dokumentasjon + kontroll viser hva du har gjort og hvorfor – viktig del av vurderingen.'
+  }
+];
+
+diagTotalEl.textContent = String(diagQuestions.length);
+
+let diagState = {
+  index: 0,
+  answers: {} // { questionId: selectedIndex }
+};
+
+function openDiagModal(){
+  diagOverlay.classList.add('show');
+  diagOverlay.setAttribute('aria-hidden','false');
+  document.body.style.overflow = 'hidden';
+
+  // last ev. tidligere resultat
+  try {
+    const saved = JSON.parse(localStorage.getItem(DIAG_STORAGE_KEY) || 'null');
+    if(saved && typeof saved === 'object' && saved.answers){
+      diagState = saved;
+      // sikring
+      if(typeof diagState.index !== 'number') diagState.index = 0;
+      if(!diagState.answers) diagState.answers = {};
+    }
+  } catch {}
+
+  renderDiag();
+}
+
+function closeDiagModal(){
+  diagOverlay.classList.remove('show');
+  diagOverlay.setAttribute('aria-hidden','true');
+  document.body.style.overflow = '';
+}
+
+function saveDiagState(){
+  try { localStorage.setItem(DIAG_STORAGE_KEY, JSON.stringify(diagState)); } catch {}
+}
+
+function calcScores(){
+  let A = 0, B = 0, C = 0;
+  const wrongTopics = { A: new Map(), B: new Map(), C: new Map() };
+
+  for(const q of diagQuestions){
+    const sel = diagState.answers[q.id];
+    const correct = (sel === q.correctIndex);
+    if(correct){
+      if(q.block === 'A') A += q.pts;
+      if(q.block === 'B') B += q.pts;
+      if(q.block === 'C') C += q.pts;
+    } else if(sel !== undefined) {
+      // bare tell feil hvis brukeren har svart
+      const m = wrongTopics[q.block];
+      m.set(q.topic, (m.get(q.topic) || 0) + 1);
+    }
+  }
+
+  return { A, B, C, wrongTopics };
+}
+
+function decidePlacement(total, A, B, C){
+  // Logikk fra spesifikasjonen
+  // total 0–8 eller A<=3 -> VG1
+  // total 9–15 og B>=6 -> VG2/VG3
+  // total 16–21 og C>=4 -> Fagprøve
+  if(total <= 8 || A <= 3) return 'VG1 (start med grunnmur)';
+  if(total >= 16 && C >= 4) return 'Fagprøve (du er nær mål)';
+  if(total >= 9 && total <= 15 && B >= 6) return 'VG2/VG3 (bygge yrkesnivå)';
+  // fallback
+  return 'VG2/VG3 (anbefalt) – men styrk grunnmur ved behov';
+}
+
+function topRecommendations(wrongTopics){
+  // plukk 2 tema fra den blokken brukeren bommet mest i
+  const all = [];
+  for(const block of ['A','B','C']){
+    for(const [topic, cnt] of wrongTopics[block].entries()){
+      all.push({ topic, cnt, block });
+    }
+  }
+  all.sort((x,y) => y.cnt - x.cnt);
+
+  const picked = [];
+  for(const item of all){
+    if(!picked.includes(item.topic)) picked.push(item.topic);
+    if(picked.length >= 3) break;
+  }
+
+  // fallback hvis få feil registrert
+  if(picked.length === 0){
+    return ['Feilsøking', 'Vern', 'Dokumentasjon'];
+  }
+  return picked;
+}
+
+function renderDiag(){
+  const q = diagQuestions[diagState.index];
+
+  // Progress
+  diagIndexEl.textContent = String(diagState.index + 1);
+  const pct = Math.round((diagState.index / diagQuestions.length) * 100);
+  diagProgressText.textContent = `${pct}%`;
+  diagProgressBar.style.width = `${pct}%`;
+
+  // Content
+  diagBlockLabel.textContent = q.label;
+  diagQuestionEl.innerHTML = `<b>${q.q}</b><div style="margin-top:6px; font-size:13px;">Tema: <span style="color:rgba(234,240,255,.92)">${q.topic}</span></div>`;
+
+  // Answers
+  diagAnswersEl.innerHTML = '';
+  const selected = diagState.answers[q.id];
+
+  q.options.forEach((opt, idx) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'ans';
+    b.textContent = opt;
+
+    if(selected !== undefined){
+      const isCorrect = idx === q.correctIndex;
+      const isSel = idx === selected;
+      if(isCorrect) b.classList.add('correct');
+      if(isSel && !isCorrect) b.classList.add('wrong');
+    }
+
+    b.addEventListener('click', () => {
+      diagState.answers[q.id] = idx;
+      // gå videre automatisk
+      if(diagState.index < diagQuestions.length - 1){
+        diagState.index += 1;
+      }
+      saveDiagState();
+      updateDiagSummary();
+      renderDiag();
+    });
+
+    diagAnswersEl.appendChild(b);
+  });
+
+  diagBackBtn.disabled = (diagState.index === 0);
+
+  updateDiagSummary();
+}
+
+function updateDiagSummary(){
+  const { A, B, C, wrongTopics } = calcScores();
+  const total = A + B + C;
+
+  scoreAEl.textContent = String(A);
+  scoreBEl.textContent = String(B);
+  scoreCEl.textContent = String(C);
+
+  const placement = decidePlacement(total, A, B, C);
+  diagPlacementEl.textContent = placement;
+
+  const recs = topRecommendations(wrongTopics);
+  diagStatus.innerHTML = `
+    <div style="margin-bottom:6px;">Total: <b>${total}</b>/21</div>
+    <div style="color:var(--muted);">
+      Øv først på: <b>${recs.join('</b>, <b>')}</b>
+    </div>
+    <div style="margin-top:10px; color:var(--muted); font-size:13px; line-height:1.45;">
+      (Dette er v0.1. Vi utvider med flere case-spørsmål etter pilot.)
+    </div>
+  `;
+}
+
+function resetDiag(){
+  diagState = { index: 0, answers: {} };
+  saveDiagState();
+  renderDiag();
+}
+
+// Events
+if(diagOpenBtn) diagOpenBtn.addEventListener('click', openDiagModal);
+if(diagOpenBtnTop) diagOpenBtnTop.addEventListener('click', openDiagModal);
+if(diagOpenBtnNav) diagOpenBtnNav.addEventListener('click', (e) => { e.preventDefault(); openDiagModal(); });
+
+diagDoneBtn.addEventListener('click', closeDiagModal);
+closeDiagBtn.addEventListener('click', closeDiagModal);
+diagOverlay.addEventListener('click', (e) => { if(e.target === diagOverlay) closeDiagModal(); });
+
+document.addEventListener('keydown', (e) => {
+  if(e.key === 'Escape' && diagOverlay.classList.contains('show')) closeDiagModal();
+});
+
+diagBackBtn.addEventListener('click', () => {
+  if(diagState.index > 0){
+    diagState.index -= 1;
+    saveDiagState();
+    renderDiag();
+  }
+});
+
+diagResetBtn.addEventListener('click', resetDiag);
+
    
   </script>
 </body>
 
 </html>
+
 
 
 
