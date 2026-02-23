@@ -833,28 +833,11 @@
       if(email) setTimeout(() => email.focus(), 350);
     });
 
-    // Waitlist form UX
-    const waitlistForm = document.getElementById('waitlistForm');
-    const formNote = document.getElementById('formNote');
-
-    waitlistForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const data = new FormData(waitlistForm);
-      const email = String(data.get('email') || '').trim();
-      const seg = String(data.get('segment') || '').trim();
-
-      if(!email || !email.includes('@') || !seg){
-        formNote.innerHTML = `<span style="color:rgba(255,204,102,.95); font-weight:900;">Sjekk feltene:</span> legg inn gyldig e-post og velg hvem du er.`;
-        return;
-      }
-
-      // Fake submit success state (bytt med ekte backend senere)
-      waitlistForm.querySelectorAll('input,select,button').forEach(el => el.disabled = true);
-      formNote.innerHTML = `<span style="color:rgba(81,208,143,.95); font-weight:900;">Takk!</span> Du er registrert for pilot. (Koble til Mailchimp/ConvertKit/egen backend når du publiserer.)`;
-    });
+   
   </script>
 </body>
 
 </html>
+
 
 
