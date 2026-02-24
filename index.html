@@ -622,6 +622,39 @@
     </div>
   </div>
 
+        <section class="card" id="oppgaver" style="margin-top:14px;">
+  <h2>Oppgavebank (5 min økter)</h2>
+  <p>Velg tema og tren. Vi lagrer progresjon på denne enheten.</p>
+
+  <div class="subcard" style="margin-top:10px;">
+    <b>Velg tema</b>
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;" id="topicButtons"></div>
+  </div>
+
+  <div class="subcard" id="taskBox" style="margin-top:12px; display:none;">
+    <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+      <div>
+        <b id="taskTopic"></b>
+        <div style="color:var(--muted); font-size:13px;" id="taskProgress"></div>
+      </div>
+      <button class="btn" id="newTaskBtn">Ny oppgave</button>
+    </div>
+
+    <div style="margin-top:10px; font-weight:850;" id="taskQ"></div>
+    <div style="display:grid; gap:10px; margin-top:10px;" id="taskA"></div>
+
+    <div class="subcard" id="taskFeedback" style="margin-top:12px; display:none;"></div>
+  </div>
+
+  <div class="subcard" style="margin-top:12px;">
+    <b>Din progresjon</b>
+    <div id="overallStats" style="margin-top:8px; color:var(--muted);"></div>
+    <button class="btn" id="resetProgressBtn" style="margin-top:10px;">Nullstill progresjon</button>
+  </div>
+</section>
+
+
+        
   <div class="topicGrid" id="topicGrid">
     <!-- kort fylles av JS -->
   </div>
@@ -1595,9 +1628,176 @@ renderTopicCards();
 
    
   </script>
+
+<script>
+  // --- Oppgavebank (MVP) ---
+  const BANK = [
+    // Grunnleggende / beregning
+    { topic:"Beregning", q:"En last trekker 6 A ved 230 V (1-fase). Ca. effekt?", a:["0,23 kW","1,38 kW","6,0 kW","13,8 kW"], correct:1, explain:"P ≈ U×I = 230×6 = 1380 W ≈ 1,38 kW" },
+    { topic:"Beregning", q:"Ohms lov er:", a:["P=U×I","U=R×I","I=P/U","R=P×I"], correct:1, explain:"Ohms lov: U = R × I" },
+
+    // Vern / sikkerhet
+    { topic:"Vern", q:"Hva beskytter et jordfeilvern (RCD) primært mot?", a:["Overlast","Kortslutning","Jordfeil/person","Spenningsfall"], correct:2, explain:"RCD kobler ut ved jordfeilstrøm → personsikkerhet/brannvern." },
+    { topic:"Vern", q:"Hovedoppgaven til en automatsikring er:", a:["Kun jordfeil","Overlast og kortslutning","Spenningsstabilisering","Kompensere cosφ"], correct:1, explain:"Automatsikring (MCB) beskytter mot overlast og kortslutning." },
+
+    // Dokumentasjon
+    { topic:"Dokumentasjon", q:"Hva er typisk del av slutt-dokumentasjon?", a:["Kun materielliste","Samsvarserklæring og måleresultater","Kun bilder","Ingen krav"], correct:1, explain:"Samsvarserklæring + relevante målinger/kontroller er vanlig." },
+
+    // Feilsøking
+    { topic:"Feilsøking", q:"Et godt første steg i feilsøking er:", a:["Bytte deler tilfeldig","Avgrense feilen systematisk med måling","Øke sikringsstørrelse","Koble fra jordleder"], correct:1, explain:"Feilsøking: avgrens → mål → bekreft hypotese." },
+
+    // HMS
+    { topic:"HMS", q:"Før arbeid på elektrisk anlegg bør du alltid:", a:["Stole på at det er spenningsløst","Sikre frakobling og kontrollmåle","Bare bruke hansker","Jobbe raskt"], correct:1, explain:"Sikre frakobling/tiltak og verifiser spenningsløs tilstand." },
+  ];
+
+  const topics = [...new Set(BANK.map(x => x.topic))];
+
+  // Progress storage
+  const KEY = "elektro_progress_v1";
+  function loadProgress(){
+    try { return JSON.parse(localStorage.getItem(KEY) || "{}"); } catch(e){ return {}; }
+  }
+  function saveProgress(p){
+    try { localStorage.setItem(KEY, JSON.stringify(p)); } catch(e){}
+  }
+  function ensureTopic(p, t){
+    if(!p[t]) p[t] = { correct:0, total:0 };
+    return p;
+  }
+
+  // UI refs
+  const topicButtons = document.getElementById("topicButtons");
+  const taskBox = document.getElementById("taskBox");
+  const taskTopic = document.getElementById("taskTopic");
+  const taskProgress = document.getElementById("taskProgress");
+  const taskQ = document.getElementById("taskQ");
+  const taskA = document.getElementById("taskA");
+  const taskFeedback = document.getElementById("taskFeedback");
+  const newTaskBtn = document.getElementById("newTaskBtn");
+  const overallStats = document.getElementById("overallStats");
+  const resetProgressBtn = document.getElementById("resetProgressBtn");
+
+  let currentTopic = null;
+  let currentTask = null;
+  let answered = false;
+
+  function renderTopicButtons(){
+    topicButtons.innerHTML = "";
+    topics.forEach(t => {
+      const b = document.createElement("button");
+      b.className = "btn";
+      b.textContent = t;
+      b.onclick = () => startTopic(t);
+      topicButtons.appendChild(b);
+    });
+  }
+
+  function pickRandomTask(t){
+    const items = BANK.filter(x => x.topic === t);
+    return items[Math.floor(Math.random() * items.length)];
+  }
+
+  function renderStats(){
+    const p = loadProgress();
+    let total = 0, correct = 0;
+
+    const lines = topics.map(t => {
+      const s = p[t] || {correct:0,total:0};
+      total += s.total; correct += s.correct;
+      const pct = s.total ? Math.round((s.correct/s.total)*100) : 0;
+      return `• ${t}: ${s.correct}/${s.total} (${pct}%)`;
+    });
+
+    overallStats.innerHTML = `
+      <div><b>Totalt:</b> ${correct}/${total} (${total ? Math.round((correct/total)*100) : 0}%)</div>
+      <div style="margin-top:6px; white-space:pre-line;">${lines.join("\n")}</div>
+    `;
+  }
+
+  function startTopic(t){
+    currentTopic = t;
+    taskBox.style.display = "block";
+    taskTopic.textContent = `Tema: ${t}`;
+    newTask();
+  }
+
+  function newTask(){
+    answered = false;
+    currentTask = pickRandomTask(currentTopic);
+
+    // show topic progress
+    const p = loadProgress();
+    const s = (p[currentTopic] || {correct:0,total:0});
+    const pct = s.total ? Math.round((s.correct/s.total)*100) : 0;
+    taskProgress.textContent = `Progresjon: ${s.correct}/${s.total} (${pct}%)`;
+
+    // render question
+    taskQ.textContent = currentTask.q;
+    taskA.innerHTML = "";
+    taskFeedback.style.display = "none";
+
+    currentTask.a.forEach((txt, idx) => {
+      const b = document.createElement("button");
+      b.className = "btn";
+      b.style.justifyContent = "flex-start";
+      b.textContent = txt;
+      b.onclick = () => answerTask(idx, b);
+      taskA.appendChild(b);
+    });
+  }
+
+  function answerTask(idx, btn){
+    if(answered) return;
+    answered = true;
+
+    const correct = idx === currentTask.correct;
+
+    // update progress
+    const p = ensureTopic(loadProgress(), currentTopic);
+    p[currentTopic].total += 1;
+    if(correct) p[currentTopic].correct += 1;
+    saveProgress(p);
+
+    // show feedback
+    taskFeedback.style.display = "block";
+    taskFeedback.innerHTML = `
+      <b style="color:${correct ? "rgba(81,208,143,.95)" : "rgba(255,204,102,.95)"}">
+        ${correct ? "Riktig!" : "Ikke helt."}
+      </b>
+      <div style="margin-top:6px; color:var(--muted); line-height:1.55;">
+        ${currentTask.explain}
+      </div>
+    `;
+
+    // refresh stats + progress text
+    renderStats();
+    const s = p[currentTopic];
+    const pct = s.total ? Math.round((s.correct/s.total)*100) : 0;
+    taskProgress.textContent = `Progresjon: ${s.correct}/${s.total} (${pct}%)`;
+  }
+
+  newTaskBtn?.addEventListener("click", () => {
+    if(!currentTopic) return;
+    newTask();
+  });
+
+  resetProgressBtn?.addEventListener("click", () => {
+    if(confirm("Vil du nullstille all progresjon?")){
+      localStorage.removeItem(KEY);
+      renderStats();
+      if(currentTopic) newTask(); // refresh view
+    }
+  });
+
+  // Init
+  renderTopicButtons();
+  renderStats();
+</script>
+  
 </body>
 
 </html>
+
 
 
 
