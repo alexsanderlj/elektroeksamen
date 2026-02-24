@@ -340,6 +340,36 @@
   padding:14px;
 }
     }
+    /* Topic cards */
+.topicGrid{
+  margin-top:12px;
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap:12px;
+}
+.topicCard{
+  border:1px solid rgba(34,48,90,.85);
+  background: rgba(6,16,42,.25);
+  border-radius:16px;
+  padding:14px;
+}
+.topicCard h3{ margin:0 0 6px; }
+.topicMeta{ color:var(--muted); font-size:13px; line-height:1.5; }
+.topicFooter{ margin-top:10px; display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
+.pillSmall{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid rgba(34,48,90,.85);
+  background: rgba(18,26,51,.45);
+  color: var(--muted);
+  font-size:12px;
+  font-weight:750;
+}
+
+@media (max-width: 980px){
+  .topicGrid{ grid-template-columns: 1fr; }
+}
   </style>
 </head>
 <body>
@@ -369,6 +399,60 @@
     </div>
     <div class="scrollbar" aria-hidden="true"><span id="scrollProg"></span></div>
   </div>
+
+  <!-- Modal: Øvingsquiz -->
+<div class="modalOverlay" id="practiceOverlay" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="practiceTitle">
+    <button class="modalClose" id="closePracticeBtn" aria-label="Lukk">✕</button>
+
+    <h2 id="practiceTitle" style="margin:0;">Øving: <span id="practiceTopicTitle">Tema</span></h2>
+    <p style="margin-top:6px; color:var(--muted);">Kort økt – 5 spørsmål.</p>
+
+    <div class="subcard" style="margin-top:10px;">
+      <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; color:var(--muted);">
+        <div>Spørsmål <b id="practiceIndex">1</b> av <b id="practiceTotal">5</b></div>
+        <div>Score: <b id="practiceScore">0</b></div>
+      </div>
+      <div style="height:10px; border:1px solid rgba(34,48,90,.85); border-radius:999px; margin-top:10px; background:rgba(6,16,42,.25); overflow:hidden;">
+        <div id="practiceProgressBar" style="height:100%; width:0%; background:linear-gradient(90deg, rgba(106,166,255,.9), rgba(81,208,143,.8));"></div>
+      </div>
+    </div>
+
+    <div class="quizGrid" style="margin-top:12px;">
+      <div class="q">
+        <div id="practiceQuestion" style="color:var(--muted); line-height:1.55;"></div>
+        <div class="answers" id="practiceAnswers" style="margin-top:12px;"></div>
+
+        <div class="subcard" id="practiceExplain" style="margin-top:12px; display:none;">
+          <b>Forklaring</b>
+          <div id="practiceExplainText" style="margin-top:6px; color:var(--muted); line-height:1.55;"></div>
+        </div>
+
+        <div class="cta" style="margin-top:12px;">
+          <button class="btn" id="practiceNextBtn" type="button">Neste →</button>
+          <button class="btn" id="practiceRestartBtn" type="button">Start på nytt</button>
+        </div>
+      </div>
+
+      <div class="miniStats">
+        <div class="stat">
+          <b>Resultat</b>
+          <div id="practiceStatus" style="color:var(--muted); line-height:1.55;">
+            Velg et svar for å få feedback.
+          </div>
+        </div>
+        <div class="stat">
+          <b>Progresjon (lokalt)</b>
+          <div id="practiceProgressSummary" style="color:var(--muted); line-height:1.7;">—</div>
+        </div>
+
+        <button class="btn primary" id="practiceDoneBtn" style="justify-content:center; width:100%; border:none;" type="button">
+          Lukk
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
   <div class="wrap">
     <!-- HERO -->
@@ -526,6 +610,20 @@
       </p>
     </div>
     <button class="btn primary" id="openDiagBtn" style="border:none;">Ta diagnosetest</button>
+  </div>
+</section>
+      <section class="card" id="oving" style="margin-top:14px;">
+  <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+    <div>
+      <h2>Start øving (MVP)</h2>
+      <p style="max-width:860px;">
+        Velg et tema og ta en kort økt. Resultatet lagres på denne enheten.
+      </p>
+    </div>
+  </div>
+
+  <div class="topicGrid" id="topicGrid">
+    <!-- kort fylles av JS -->
   </div>
 </section>
 
@@ -1252,11 +1350,255 @@ diagBackBtn.addEventListener('click', () => {
 
 diagResetBtn.addEventListener('click', resetDiag);
 
+    // =========================
+// Øvingsbank (MVP) + lokal progresjon
+// =========================
+const PRACTICE_STORAGE_KEY = "ee_practice_v01";
+
+const practiceBank = {
+  "Ohms lov": [
+    { q:"R = 10 Ω og I = 2 A. Hva er U?", options:["5 V","12 V","20 V","230 V"], correct:2, explain:"U = R×I = 10×2 = 20 V." },
+    { q:"U = 24 V og R = 8 Ω. Hva er I?", options:["0,33 A","2 A","3 A","8 A"], correct:2, explain:"I = U/R = 24/8 = 3 A." },
+    { q:"Hva beskriver Ohms lov?", options:["P=U×I","U=R×I","E=mc²","f=1/T"], correct:1, explain:"Ohms lov: U=R×I." },
+    { q:"Hvis R øker og U er konstant, hva skjer med I?", options:["Øker","Minker","Endres ikke","Blir 0 alltid"], correct:1, explain:"I = U/R → større R gir lavere I." },
+    { q:"En leder har U=12 V og I=0,5 A. R?", options:["6 Ω","12 Ω","24 Ω","0,04 Ω"], correct:2, explain:"R = U/I = 12/0,5 = 24 Ω." },
+  ],
+  "Effekt": [
+    { q:"230 V og 10 A (1-fase). Effekt?", options:["230 W","2,3 kW","10 kW","23 kW"], correct:1, explain:"P≈U×I=230×10=2300 W=2,3 kW." },
+    { q:"Hva er riktig formel for effekt i 1-fase (forenklet)?", options:["P=U×I","P=U/I","P=I/R","P=R×I"], correct:0, explain:"Forenklet: P=U×I." },
+    { q:"En last bruker 1000 W ved 230 V. Strøm omtrent?", options:["0,23 A","2,2 A","4,3 A","10 A"], correct:2, explain:"I=P/U≈1000/230≈4,3 A." },
+    { q:"Hva skjer ofte med strømmen hvis effekten øker (samme spenning)?", options:["Minker","Øker","Blir null","Uendret"], correct:1, explain:"P=U×I → høyere P ved samme U betyr høyere I." },
+    { q:"2000 W ved 230 V. Strøm omtrent?", options:["~1 A","~4 A","~9 A","~20 A"], correct:2, explain:"I≈2000/230≈8,7 A (~9 A)." },
+  ],
+  "Måleinstrumenter": [
+    { q:"Hva bruker du for å måle spenning?", options:["Voltmeter","Amperemeter","Ohmmeter","Tang"], correct:0, explain:"Spenning måles med voltmeter." },
+    { q:"Hva måler et amperemeter?", options:["Spenning","Strøm","Motstand","Effekt"], correct:1, explain:"Amperemeter måler strøm." },
+    { q:"Når bruker du ohmmeter?", options:["På spenningssatt anlegg","Når anlegget er frakoblet","Bare ved 400 V","Kun i automasjon"], correct:1, explain:"Motstand måles normalt spenningsløst." },
+    { q:"Du får 0 V, men forventer spenning. Første sjekk?", options:["Øke sikring","Sjekk målepunkt og område","Bytte utstyr","Ignorere"], correct:1, explain:"Feil område/tilkobling er vanlig — verifiser måleoppsett først." },
+    { q:"Hva er en vanlig feil ved måling?", options:["Riktig område alltid","Feil måleområde","Alltid kortslutning","Feil farge på ledning"], correct:1, explain:"Feil måleområde/tilkobling er en klassiker." },
+  ],
+  "Vern": [
+    { q:"Hvorfor er riktig vern viktig?", options:["Øke spenning","Beskytte kabel/utstyr mot overstrøm","Spare strøm","Gi høyere effekt"], correct:1, explain:"Vern beskytter mot overlast/kortslutning og skal passe installasjonen." },
+    { q:"Hva er en vanlig årsak til at vern løser ut?", options:["Overstrøm/feil","For mye dokumentasjon","For lav temperatur","Riktig drift"], correct:0, explain:"Overlast, kortslutning eller jordfeil kan gi utkobling." },
+    { q:"Hva bør du gjøre først hvis vern løser ut ved start av maskin?", options:["Større vern","Kartlegge og måle/observere","Bytte alt","Ignorere"], correct:1, explain:"Start med feilsøking og fakta før endringer." },
+    { q:"Hvilket utsagn passer best?", options:["Vern beskytter alltid personen alene","Vern + tiltak beskytter anlegget, HMS beskytter arbeid","Vern er unødvendig","Vern øker effekt"], correct:1, explain:"Vern er del av sikkerhet, men HMS-prosedyrer er også avgjørende." },
+    { q:"Hva bør være riktig før arbeid på kurs?", options:["Starte raskt","Risikovurdere og sikre","Kun dokumentere","Bare spørre kunde"], correct:1, explain:"Sikring/risikovurdering før gjennomføring." },
+  ],
+  "Dokumentasjon": [
+    { q:"Hvorfor dokumentasjon i fagprøve/arbeid?", options:["Pynt","Viser valg/metode og grunnlag for vurdering","Kan hoppes over","Bare for skolen"], correct:1, explain:"Dokumentasjon viser hva du har gjort og hvorfor." },
+    { q:"Hva inngår ofte i dokumentasjon?", options:["Kun bilde","Måleresultat + kontroll + beskrivelse","Bare signatur","Ingen ting"], correct:1, explain:"Kontroll/måling + beskrivelse og relevant info." },
+    { q:"Når bør du dokumentere?", options:["Kun til slutt","Underveis og til slutt","Aldri","Før du starter bare"], correct:1, explain:"Underveis gir bedre kvalitet og sporbarhet." },
+    { q:"Hva er en god rekkefølge i praksis?", options:["Utføre→plan→HMS","HMS→plan→utføre→kontroll/dok","Dok→utføre→plan","Plan→utføre→HMS→kontroll"], correct:1, explain:"HMS/plan først, så utførelse, deretter kontroll/dokumentasjon." },
+    { q:"Hva er hensikten med sluttkontroll?", options:["Spare tid","Verifisere at anlegget fungerer og er trygt","Kun for å få betalt","Kun for lærling"], correct:1, explain:"Kontroll bekrefter sikker og korrekt funksjon." },
+  ]
+};
+
+// ---- UI refs
+const topicGrid = document.getElementById("topicGrid");
+
+const practiceOverlay = document.getElementById("practiceOverlay");
+const closePracticeBtn = document.getElementById("closePracticeBtn");
+const practiceDoneBtn = document.getElementById("practiceDoneBtn");
+
+const practiceTopicTitle = document.getElementById("practiceTopicTitle");
+const practiceIndexEl = document.getElementById("practiceIndex");
+const practiceTotalEl = document.getElementById("practiceTotal");
+const practiceScoreEl = document.getElementById("practiceScore");
+const practiceProgressBar = document.getElementById("practiceProgressBar");
+
+const practiceQuestionEl = document.getElementById("practiceQuestion");
+const practiceAnswersEl = document.getElementById("practiceAnswers");
+const practiceExplain = document.getElementById("practiceExplain");
+const practiceExplainText = document.getElementById("practiceExplainText");
+
+const practiceStatus = document.getElementById("practiceStatus");
+const practiceProgressSummary = document.getElementById("practiceProgressSummary");
+
+const practiceNextBtn = document.getElementById("practiceNextBtn");
+const practiceRestartBtn = document.getElementById("practiceRestartBtn");
+
+function loadPracticeProgress(){
+  try { return JSON.parse(localStorage.getItem(PRACTICE_STORAGE_KEY) || "{}"); }
+  catch { return {}; }
+}
+function savePracticeProgress(p){
+  try { localStorage.setItem(PRACTICE_STORAGE_KEY, JSON.stringify(p)); } catch {}
+}
+let practiceProgress = loadPracticeProgress();
+
+let practiceState = {
+  topic: null,
+  idx: 0,
+  correct: 0,
+  answered: false
+};
+
+function openPractice(topic){
+  practiceState.topic = topic;
+  practiceState.idx = 0;
+  practiceState.correct = 0;
+  practiceState.answered = false;
+
+  practiceTopicTitle.textContent = topic;
+  practiceTotalEl.textContent = String(practiceBank[topic].length);
+
+  practiceOverlay.classList.add("show");
+  practiceOverlay.setAttribute("aria-hidden","false");
+  document.body.style.overflow = "hidden";
+
+  renderPractice();
+}
+
+function closePractice(){
+  practiceOverlay.classList.remove("show");
+  practiceOverlay.setAttribute("aria-hidden","true");
+  document.body.style.overflow = "";
+}
+
+function renderTopicCards(){
+  if(!topicGrid) return;
+  const topics = Object.keys(practiceBank);
+
+  topicGrid.innerHTML = "";
+  topics.forEach(t => {
+    const p = practiceProgress[t] || { sessions:0, best:0 };
+
+    const card = document.createElement("div");
+    card.className = "topicCard";
+    card.innerHTML = `
+      <h3>${t}</h3>
+      <div class="topicMeta">5 spørsmål • kort økt</div>
+      <div class="topicFooter">
+        <span class="pillSmall">Best: ${p.best}/5 • Økter: ${p.sessions}</span>
+        <button class="btn primary" style="border:none;" type="button">Start øving</button>
+      </div>
+    `;
+    card.querySelector("button").addEventListener("click", () => openPractice(t));
+    topicGrid.appendChild(card);
+  });
+}
+
+function updatePracticeSummary(){
+  const topic = practiceState.topic;
+  const p = practiceProgress[topic] || { sessions:0, best:0 };
+  practiceProgressSummary.textContent = `Tema: ${topic} • Best: ${p.best}/5 • Økter: ${p.sessions}`;
+}
+
+function renderPractice(){
+  const topic = practiceState.topic;
+  const list = practiceBank[topic];
+  const item = list[practiceState.idx];
+
+  practiceIndexEl.textContent = String(practiceState.idx + 1);
+  practiceScoreEl.textContent = String(practiceState.correct);
+
+  const pct = Math.round((practiceState.idx / list.length) * 100);
+  practiceProgressBar.style.width = `${pct}%`;
+
+  practiceQuestionEl.innerHTML = `<b>${item.q}</b>`;
+  practiceAnswersEl.innerHTML = "";
+  practiceExplain.style.display = "none";
+  practiceExplainText.textContent = "";
+  practiceStatus.textContent = "Velg et svar for å få feedback.";
+  practiceState.answered = false;
+
+  item.options.forEach((opt, i) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "ans";
+    b.textContent = opt;
+    b.addEventListener("click", () => handlePracticeAnswer(i));
+    practiceAnswersEl.appendChild(b);
+  });
+
+  practiceNextBtn.disabled = true;
+  updatePracticeSummary();
+}
+
+function handlePracticeAnswer(selectedIndex){
+  if(practiceState.answered) return;
+  practiceState.answered = true;
+
+  const topic = practiceState.topic;
+  const list = practiceBank[topic];
+  const item = list[practiceState.idx];
+
+  const buttons = Array.from(practiceAnswersEl.querySelectorAll(".ans"));
+  buttons.forEach((btn, i) => {
+    if(i === item.correct) btn.classList.add("correct");
+    if(i === selectedIndex && i !== item.correct) btn.classList.add("wrong");
+    btn.disabled = true;
+  });
+
+  const correct = selectedIndex === item.correct;
+  if(correct) practiceState.correct += 1;
+
+  practiceScoreEl.textContent = String(practiceState.correct);
+  practiceExplain.style.display = "block";
+  practiceExplainText.textContent = item.explain;
+
+  practiceStatus.innerHTML = correct
+    ? `<span style="color:rgba(81,208,143,.95); font-weight:900;">Riktig!</span> Bra jobba.`
+    : `<span style="color:rgba(255,204,102,.95); font-weight:900;">Ikke helt.</span> Se forklaringen.`;
+
+  practiceNextBtn.disabled = false;
+
+  // hvis siste spørsmål: lagre resultat
+  if(practiceState.idx === list.length - 1){
+    finalizePracticeSession();
+    practiceNextBtn.textContent = "Ferdig";
+  } else {
+    practiceNextBtn.textContent = "Neste →";
+  }
+}
+
+function finalizePracticeSession(){
+  const topic = practiceState.topic;
+  const res = practiceState.correct;
+
+  const current = practiceProgress[topic] || { sessions:0, best:0 };
+  current.sessions += 1;
+  if(res > current.best) current.best = res;
+
+  practiceProgress[topic] = current;
+  savePracticeProgress(practiceProgress);
+  renderTopicCards();
+  updatePracticeSummary();
+}
+
+practiceNextBtn.addEventListener("click", () => {
+  const topic = practiceState.topic;
+  const list = practiceBank[topic];
+
+  if(practiceState.idx < list.length - 1){
+    practiceState.idx += 1;
+    renderPractice();
+  } else {
+    closePractice();
+  }
+});
+
+practiceRestartBtn.addEventListener("click", () => {
+  openPractice(practiceState.topic);
+});
+
+closePracticeBtn.addEventListener("click", closePractice);
+practiceDoneBtn.addEventListener("click", closePractice);
+practiceOverlay.addEventListener("click", (e) => { if(e.target === practiceOverlay) closePractice(); });
+
+document.addEventListener("keydown", (e) => {
+  if(e.key === "Escape" && practiceOverlay.classList.contains("show")) closePractice();
+});
+
+// Start: render cards
+renderTopicCards();
+
    
   </script>
 </body>
 
 </html>
+
 
 
 
