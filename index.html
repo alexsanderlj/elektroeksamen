@@ -100,7 +100,7 @@
     .hero{
       margin-top:26px;
       display:grid;
-      grid-template-columns: 1.15fr .85fr;
+      grid-template-columns: 1fr 1fr;
       gap:16px;
       align-items:stretch;
     }
@@ -141,7 +141,12 @@
     h3{ margin:0 0 8px; font-size:18px; }
     .cta{ display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
 
-    .grid3{ display:grid; grid-template-columns: repeat(3,1fr); gap:12px; margin-top:14px; }
+    .grid3{
+  display:grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap:12px;
+  margin-top:14px;
+}
     .kpi b{ display:block; margin-bottom:6px; font-size:16px; }
     .kpi span{ color:var(--muted); font-size:14px; line-height:1.45; }
 
@@ -175,7 +180,7 @@
     .tabpanel.active{ display:block; }
 
     /* Steps */
-    .steps{ display:grid; grid-template-columns: repeat(4,1fr); gap:10px; margin-top:10px; }
+    .steps{ display:grid; grid-template-columns: repeat(2,1fr); gap:10px; margin-top:10px; }
     .step{
       padding:14px; border-radius:16px;
       border:1px solid rgba(34,48,90,.85);
@@ -303,6 +308,8 @@
   margin-top:10px;
   align-items:start; /* hindrer stretching */
 }
+    .hero > * { min-width: 0; }
+    
     .answers{ display:grid; gap:8px; margin-top:10px; }
     .ans{
       padding:10px 10px;
@@ -1797,6 +1804,7 @@ renderTopicCards();
 </body>
 
 </html>
+
 
 
 
