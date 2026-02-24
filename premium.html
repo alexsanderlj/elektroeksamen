@@ -508,6 +508,79 @@
 </div>
 
   <div class="wrap">
+<section class="card" id="premiumDash" style="margin-top:14px;">
+  <h1 style="margin:0 0 6px;">Premium ⚡</h1>
+  <p style="margin:0 0 12px; color:var(--muted);">
+    Full tilgang: eksamensmodus, case-oppgaver og statistikk.
+  </p>
+
+  <div class="grid3">
+    <div class="subcard">
+      <b>Beste eksamensscore</b>
+      <div id="premBestScore" style="margin-top:6px; font-size:20px; font-weight:900;">–</div>
+      <div style="color:var(--muted); font-size:13px;">Lagrer på denne enheten</div>
+    </div>
+    <div class="subcard">
+      <b>Fullførte eksamener</b>
+      <div id="premExamCount" style="margin-top:6px; font-size:20px; font-weight:900;">0</div>
+      <div style="color:var(--muted); font-size:13px;">Antall gjennomføringer</div>
+    </div>
+    <div class="subcard">
+      <b>Anbefalt fokus</b>
+      <div id="premFocus" style="margin-top:6px; font-weight:900;">–</div>
+      <div style="color:var(--muted); font-size:13px;">Basert på feil i eksamen</div>
+    </div>
+  </div>
+</section>
+
+<section class="card" id="premExam" style="margin-top:14px;">
+  <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:flex-start;">
+    <div>
+      <h2 style="margin:0 0 6px;">Eksamensmodus</h2>
+      <p style="margin:0; color:var(--muted);">20 spørsmål • 25 minutter • resultat + tema-svakheter</p>
+    </div>
+
+    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+      <div class="badge"><i></i><span id="premTimer">25:00</span></div>
+      <button class="btn primary" id="premStartExam" style="border:none;">Start eksamen</button>
+      <button class="btn" id="premResetExam">Nullstill</button>
+    </div>
+  </div>
+
+  <div class="subcard" id="premExamBox" style="margin-top:12px; display:none;">
+    <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+      <b id="premExamProgress">Spørsmål 1/20</b>
+      <span style="color:var(--muted);" id="premExamTopic">Tema: –</span>
+    </div>
+
+    <div id="premExamQ" style="margin-top:10px; font-weight:900;"></div>
+    <div id="premExamA" style="display:grid; gap:10px; margin-top:10px;"></div>
+
+    <div class="subcard" id="premExamFeedback" style="margin-top:12px; display:none;"></div>
+  </div>
+
+  <div class="subcard" id="premExamResult" style="margin-top:12px; display:none;"></div>
+</section>
+
+<section class="card" id="premCase" style="margin-top:14px;">
+  <h2 style="margin:0 0 6px;">Case-modus (som fagprøve-tankegang)</h2>
+  <p style="margin:0; color:var(--muted);">Scenario → valg i steg → feedback på HMS, plan og dokumentasjon.</p>
+
+  <div class="subcard" style="margin-top:12px;">
+    <b>Case: Ny kurs til garasje</b>
+    <div style="color:var(--muted); margin-top:6px; line-height:1.55;">
+      Du skal legge opp ny kurs til en garasje. Velg riktige handlinger i rekkefølge.
+    </div>
+
+    <div id="premCaseBox" style="margin-top:10px;"></div>
+
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
+      <button class="btn primary" id="premCaseStart" style="border:none;">Start case</button>
+      <button class="btn" id="premCaseReset">Nullstill case</button>
+    </div>
+  </div>
+</section>
+    
     <!-- HERO -->
     <section class="hero" id="top">
       <div class="card">
@@ -1898,6 +1971,323 @@ renderTopicCards();
 
   // Lås siden hvis ikke tilgang
   if(!isUnlocked()) lock();
+</script>
+
+  <script>
+  // =========================
+  // PREMIUM: spørsmålbank
+  // =========================
+  const PREM_BANK = [
+    { topic:"Beregning", q:"En last trekker 8 A ved 230 V (1-fase). Ca. effekt?", a:["0,18 kW","1,84 kW","8,0 kW","18,4 kW"], correct:1, explain:"P ≈ U×I = 230×8 = 1840 W ≈ 1,84 kW" },
+    { topic:"Beregning", q:"Ohms lov er:", a:["P=U×I","U=R×I","I=P/U","R=P×I"], correct:1, explain:"Ohms lov: U = R × I" },
+    { topic:"Vern", q:"Hva beskytter jordfeilvern (RCD) primært mot?", a:["Overlast","Kortslutning","Jordfeil/person","Spenningsfall"], correct:2, explain:"RCD kobler ut ved jordfeilstrøm → personsikkerhet/brannvern." },
+    { topic:"Vern", q:"Automatsikring (MCB) beskytter normalt mot:", a:["Kun jordfeil","Overlast og kortslutning","Kun spenningsfall","Kun temperatur"], correct:1, explain:"MCB beskytter mot overlast og kortslutning." },
+    { topic:"HMS", q:"Før arbeid på anlegg bør du alltid:", a:["Stole på at det er spenningsløst","Sikre frakobling og kontrollmåle","Bare bruke hansker","Jobbe raskt"], correct:1, explain:"Verifiser spenningsløs tilstand og sikre tiltak." },
+    { topic:"Dokumentasjon", q:"Hva er typisk del av slutt-dokumentasjon?", a:["Kun materielliste","Samsvarserklæring og måleresultater","Kun bilder","Ingen krav"], correct:1, explain:"Samsvarserklæring + relevante målinger/kontroller er vanlig." },
+    { topic:"Feilsøking", q:"Et godt første steg i feilsøking er:", a:["Bytte deler tilfeldig","Avgrense feilen systematisk med måling","Øke sikringsstørrelse","Koble fra jordleder"], correct:1, explain:"Avgrens feilen → mål → bekreft hypotese." },
+    { topic:"Måling", q:"Hva brukes isolasjonsmåling typisk til å avdekke?", a:["Spenningsfall","Isolasjonsfeil/lekkasje","Cosφ","Kortslutningsytelse"], correct:1, explain:"Isolasjonsmåling avdekker isolasjonsfeil/lekkasje." },
+    { topic:"Grunnleggende", q:"Effektformelen er:", a:["U=R×I","P=U×I","R=P×I","I=R/U"], correct:1, explain:"Effekt: P = U × I (for DC/1-fase uten cosφ)." },
+    { topic:"Planlegging", q:"Hva bør komme tidlig i planleggingen?", a:["Montere først","Risikovurdering og arbeidsplan","Fjerne jordleder","Koble om vern tilfeldig"], correct:1, explain:"HMS/risikovurdering og plan før utførelse." }
+  ];
+
+  // =========================
+  // PREMIUM: dashboard stats
+  // =========================
+  const STATS_KEY = "prem_stats_v1";
+
+  function loadStats(){
+    try { return JSON.parse(localStorage.getItem(STATS_KEY) || "{}"); } catch(e){ return {}; }
+  }
+  function saveStats(s){
+    try { localStorage.setItem(STATS_KEY, JSON.stringify(s)); } catch(e){}
+  }
+
+  function recomputeFocus(stats){
+    const wrongByTopic = stats.wrongByTopic || {};
+    const entries = Object.entries(wrongByTopic).sort((a,b)=>b[1]-a[1]);
+    return entries.length ? entries[0][0] : "–";
+  }
+
+  function renderDash(){
+    const stats = loadStats();
+    const best = stats.bestScore ?? null;
+    const count = stats.examCount ?? 0;
+    const focus = recomputeFocus(stats);
+
+    document.getElementById("premBestScore").textContent = (best === null) ? "–" : `${best}%`;
+    document.getElementById("premExamCount").textContent = String(count);
+    document.getElementById("premFocus").textContent = focus;
+  }
+
+  // =========================
+  // PREMIUM: eksamensmodus
+  // =========================
+  const EXAM_LEN = 20;
+  const EXAM_SECONDS = 25 * 60;
+
+  let premTimer = EXAM_SECONDS;
+  let premTick = null;
+
+  let premExam = [];
+  let premIndex = 0;
+  let premCorrect = 0;
+  let premWrongTopics = {};
+  let premAnswered = false;
+
+  const premTimerEl = document.getElementById("premTimer");
+  const premStartBtn = document.getElementById("premStartExam");
+  const premResetBtn = document.getElementById("premResetExam");
+  const premExamBox = document.getElementById("premExamBox");
+  const premExamResult = document.getElementById("premExamResult");
+  const premExamProgress = document.getElementById("premExamProgress");
+  const premExamTopic = document.getElementById("premExamTopic");
+  const premExamQ = document.getElementById("premExamQ");
+  const premExamA = document.getElementById("premExamA");
+  const premExamFeedback = document.getElementById("premExamFeedback");
+
+  function fmtTime(sec){
+    const m = String(Math.floor(sec/60)).padStart(2,"0");
+    const s = String(sec%60).padStart(2,"0");
+    return `${m}:${s}`;
+  }
+
+  function shuffle(arr){
+    const a = arr.slice();
+    for(let i=a.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [a[i],a[j]] = [a[j],a[i]];
+    }
+    return a;
+  }
+
+  function startExam(){
+    // bygg eksamen ved å trekke tilfeldig fra banken (med repetisjon hvis få spørsmål)
+    const pool = shuffle(PREM_BANK);
+    premExam = [];
+    while(premExam.length < EXAM_LEN){
+      premExam.push(pool[premExam.length % pool.length]);
+    }
+
+    premIndex = 0;
+    premCorrect = 0;
+    premWrongTopics = {};
+    premAnswered = false;
+
+    premTimer = EXAM_SECONDS;
+    premTimerEl.textContent = fmtTime(premTimer);
+
+    premExamResult.style.display = "none";
+    premExamBox.style.display = "block";
+    premExamFeedback.style.display = "none";
+
+    if(premTick) clearInterval(premTick);
+    premTick = setInterval(() => {
+      premTimer--;
+      premTimerEl.textContent = fmtTime(premTimer);
+      if(premTimer <= 0){
+        clearInterval(premTick);
+        premTick = null;
+        finishExam(true);
+      }
+    }, 1000);
+
+    renderExamQuestion();
+  }
+
+  function renderExamQuestion(){
+    premAnswered = false;
+    premExamFeedback.style.display = "none";
+
+    const item = premExam[premIndex];
+    premExamProgress.textContent = `Spørsmål ${premIndex+1}/${EXAM_LEN}`;
+    premExamTopic.textContent = `Tema: ${item.topic}`;
+
+    premExamQ.textContent = item.q;
+    premExamA.innerHTML = "";
+
+    item.a.forEach((txt, idx) => {
+      const b = document.createElement("button");
+      b.className = "btn";
+      b.style.justifyContent = "flex-start";
+      b.textContent = txt;
+      b.onclick = () => answerExam(idx);
+      premExamA.appendChild(b);
+    });
+  }
+
+  function answerExam(idx){
+    if(premAnswered) return;
+    premAnswered = true;
+
+    const item = premExam[premIndex];
+    const ok = idx === item.correct;
+
+    if(ok){
+      premCorrect++;
+      premExamFeedback.innerHTML = `<b style="color:rgba(81,208,143,.95)">Riktig!</b>
+        <div style="margin-top:6px; color:var(--muted); line-height:1.55;">${item.explain}</div>`;
+    } else {
+      premWrongTopics[item.topic] = (premWrongTopics[item.topic] || 0) + 1;
+      premExamFeedback.innerHTML = `<b style="color:rgba(255,204,102,.95)">Ikke helt.</b>
+        <div style="margin-top:6px; color:var(--muted); line-height:1.55;">${item.explain}</div>`;
+    }
+
+    premExamFeedback.style.display = "block";
+
+    setTimeout(() => {
+      premIndex++;
+      if(premIndex < EXAM_LEN) renderExamQuestion();
+      else finishExam(false);
+    }, 650);
+  }
+
+  function finishExam(timeUp){
+    if(premTick){ clearInterval(premTick); premTick = null; }
+
+    const pct = Math.round((premCorrect / EXAM_LEN) * 100);
+    const stats = loadStats();
+
+    stats.examCount = (stats.examCount || 0) + 1;
+    stats.bestScore = Math.max(stats.bestScore || 0, pct);
+
+    stats.wrongByTopic = stats.wrongByTopic || {};
+    for(const [t,n] of Object.entries(premWrongTopics)){
+      stats.wrongByTopic[t] = (stats.wrongByTopic[t] || 0) + n;
+    }
+
+    saveStats(stats);
+    renderDash();
+
+    const weak = Object.entries(premWrongTopics).sort((a,b)=>b[1]-a[1]).slice(0,2).map(x=>x[0]).join(", ");
+    const weakText = weak || "Ingen tydelige hull";
+
+    premExamBox.style.display = "none";
+    premExamResult.style.display = "block";
+    premExamResult.innerHTML = `
+      <b>Resultat: ${pct}% (${premCorrect}/${EXAM_LEN})</b>
+      <div style="margin-top:6px; color:var(--muted); line-height:1.55;">
+        ${timeUp ? "Tiden er ute. " : ""}<b>Svake tema:</b> ${weakText}.
+        <br>Tips: Tren 5 minutter på svakt tema før du tar eksamen på nytt.
+      </div>
+    `;
+  }
+
+  function resetExam(){
+    if(premTick){ clearInterval(premTick); premTick = null; }
+    premTimer = EXAM_SECONDS;
+    premTimerEl.textContent = fmtTime(premTimer);
+    premExamBox.style.display = "none";
+    premExamResult.style.display = "none";
+  }
+
+  premStartBtn?.addEventListener("click", startExam);
+  premResetBtn?.addEventListener("click", resetExam);
+
+  // =========================
+  // PREMIUM: Case-modus
+  // =========================
+  const CASE = [
+    {
+      step:"Steg 1: HMS",
+      q:"Hva gjør du først før arbeid?",
+      a:["Starter montering med en gang","Risikovurdering + sikre frakobling/kontrollmåle","Øker sikring for å unngå utkobling","Kobler fra jordleder"],
+      correct:1,
+      explain:"Først HMS: plan, risikovurdering, sikre frakobling og verifiser spenningsløs tilstand."
+    },
+    {
+      step:"Steg 2: Plan",
+      q:"Hva bør være med i planen?",
+      a:["Kun materielliste","Arbeidsrekkefølge + målinger + dokumentasjon","Bare tegning","Ingen plan nødvendig"],
+      correct:1,
+      explain:"Plan bør dekke rekkefølge, kontroll/målinger og dokumentasjonskrav."
+    },
+    {
+      step:"Steg 3: Dokumentasjon",
+      q:"Hva leverer du etterpå?",
+      a:["Kun bilder","Samsvarserklæring + relevante måleresultater","Kun muntlig forklaring","Ingenting"],
+      correct:1,
+      explain:"Samsvar + måleresultater er sentralt, sammen med evt. skjema/tegning."
+    }
+  ];
+
+  let caseIdx = 0;
+  let caseScore = 0;
+  let caseDone = false;
+
+  const premCaseBox = document.getElementById("premCaseBox");
+  const premCaseStart = document.getElementById("premCaseStart");
+  const premCaseReset = document.getElementById("premCaseReset");
+
+  function renderCase(){
+    caseDone = false;
+    const item = CASE[caseIdx];
+
+    premCaseBox.innerHTML = `
+      <div style="font-weight:900;">${item.step}</div>
+      <div style="margin-top:6px; color:var(--muted); line-height:1.55;">${item.q}</div>
+      <div style="display:grid; gap:10px; margin-top:10px;" id="caseAnswers"></div>
+      <div class="subcard" id="caseFb" style="margin-top:12px; display:none;"></div>
+      <div style="margin-top:10px; color:var(--muted); font-size:13px;">Progresjon: ${caseIdx+1}/${CASE.length} • Score: ${caseScore}</div>
+    `;
+
+    const ans = premCaseBox.querySelector("#caseAnswers");
+    item.a.forEach((txt, idx) => {
+      const b = document.createElement("button");
+      b.className = "btn";
+      b.style.justifyContent = "flex-start";
+      b.textContent = txt;
+      b.onclick = () => answerCase(idx);
+      ans.appendChild(b);
+    });
+  }
+
+  function answerCase(idx){
+    if(caseDone) return;
+    caseDone = true;
+    const item = CASE[caseIdx];
+    const ok = idx === item.correct;
+    if(ok) caseScore++;
+
+    const fb = premCaseBox.querySelector("#caseFb");
+    fb.style.display = "block";
+    fb.innerHTML = `
+      <b style="color:${ok ? "rgba(81,208,143,.95)" : "rgba(255,204,102,.95)"}">
+        ${ok ? "Riktig!" : "Ikke helt."}
+      </b>
+      <div style="margin-top:6px; color:var(--muted); line-height:1.55;">${item.explain}</div>
+    `;
+
+    setTimeout(() => {
+      caseIdx++;
+      if(caseIdx < CASE.length) renderCase();
+      else {
+        premCaseBox.innerHTML = `
+          <b>Case ferdig 🎉</b>
+          <div style="margin-top:6px; color:var(--muted); line-height:1.55;">
+            Score: <b>${caseScore}/${CASE.length}</b>. (Neste: flere case med dimensjonering, vern og feilsøking.)
+          </div>
+        `;
+      }
+    }, 850);
+  }
+
+  function startCase(){
+    caseIdx = 0;
+    caseScore = 0;
+    renderCase();
+  }
+  function resetCase(){
+    premCaseBox.innerHTML = "";
+    caseIdx = 0;
+    caseScore = 0;
+  }
+
+  premCaseStart?.addEventListener("click", startCase);
+  premCaseReset?.addEventListener("click", resetCase);
+
+  // Init dashboard
+  renderDash();
+  premTimerEl.textContent = fmtTime(premTimer);
 </script>
 
 </body>
